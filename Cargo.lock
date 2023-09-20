@@ -1814,6 +1814,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "chain-spec-generator"
+version = "1.0.0"
+dependencies = [
+ "clap",
+ "hex-literal",
+ "kusama-runtime-constants 1.0.0",
+ "pallet-im-online",
+ "pallet-staking",
+ "polkadot-primitives",
+ "polkadot-runtime",
+ "polkadot-runtime-constants 1.0.0",
+ "polkadot-runtime-parachains",
+ "sc-chain-spec",
+ "sc-consensus-grandpa",
+ "serde_json",
+ "sp-authority-discovery",
+ "sp-consensus-babe",
+ "sp-consensus-beefy",
+ "sp-core",
+ "sp-runtime",
+ "staging-kusama-runtime",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9627,6 +9651,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-consensus-grandpa"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc9029e051a1ff62dff58219ca654ebecc669e3746cf4a0bc1515f96c2220c9b"
+dependencies = [
+ "ahash 0.8.3",
+ "array-bytes",
+ "async-trait",
+ "dyn-clone",
+ "finality-grandpa",
+ "fork-tree",
+ "futures",
+ "futures-timer",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "rand 0.8.5",
+ "sc-block-builder",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-network",
+ "sc-network-common",
+ "sc-network-gossip",
+ "sc-telemetry",
+ "sc-transaction-pool-api",
+ "sc-utils",
+ "serde_json",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-grandpa",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+]
+
+[[package]]
 name = "sc-executor"
 version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9821,6 +9887,25 @@ dependencies = [
  "sp-consensus",
  "sp-consensus-grandpa",
  "sp-runtime",
+]
+
+[[package]]
+name = "sc-network-gossip"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "596fa23e269e218a5cbd9928fa1df30c46fbf9f04cdcf0cbd6549c47e952ad77"
+dependencies = [
+ "ahash 0.8.3",
+ "futures",
+ "futures-timer",
+ "libp2p",
+ "log",
+ "sc-network",
+ "sc-network-common",
+ "schnellru",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+ "tracing",
 ]
 
 [[package]]
