@@ -1,0 +1,90 @@
+# build chain spec with staging-chain-spec-builder?
+
+[settings]
+node_spawn_timeout = 240
+
+[relaychain]
+# default_command is used to convert plain chain spec into raw form
+default_command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{POLKADOT_WASM_BLOB}}"
+# chain_spec_command is used to generate plain chain spec
+chain_spec_command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh build-spec --runtime-wasm-blob {{POLKADOT_WASM_BLOB}} --chain {{SCRIPT_FOLDER}}/networks/polkadot-local.json"
+# and this is applied when we start actual binary
+default_args = [ "-lparachain=trace,xcm=trace,sync=trace,grandpa=trace,babe=trace,keystore=trace,cumulus=trace,runtime::parachains=trace,runtime::inclusion-inherent=trace" ]
+
+	[[relaychain.nodes]]
+	command = "{{POLKADOT_BINARY_PATH}}"
+	name = "alice-polkadot-validator"
+	validator = true
+	rpc_port = 9935
+	ws_port = 9945
+	balance = 2000000000000
+
+	[[relaychain.nodes]]
+	command = "{{POLKADOT_BINARY_PATH}}"
+	name = "bob-polkadot-validator"
+	validator = true
+	rpc_port = 9936
+	ws_port = 9946
+	balance = 2000000000000
+
+	[[relaychain.nodes]]
+	command = "{{POLKADOT_BINARY_PATH}}"
+	name = "charlie-polkadot-validator"
+	validator = true
+	rpc_port = 9937
+	ws_port = 9947
+	balance = 2000000000000
+
+	[[relaychain.nodes]]
+	command = "{{POLKADOT_BINARY_PATH}}"
+	name = "dave-polkadot-validator"
+	validator = true
+	rpc_port = 9938
+	ws_port = 9948
+	balance = 2000000000000
+
+[[parachains]]
+id = 1002
+cumulus_based = true
+chain_spec_path = "{{SCRIPT_FOLDER}}/networks/bridge-hub-polkadot-local.json"
+
+	[[parachains.collators]]
+	name = "bridge-hub-polkadot-collator1"
+	# we can't use `polkadot-parachain` here, because it can't build chain spec for us
+	command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{POLKADOT_BRIDGE_HUB_WASM_BLOB}} --binary {{POLKADOT_PARACHAIN_BINARY_PATH}}"
+	rpc_port = 8935
+	ws_port = 8945
+	args = [ "-lparachain=trace,runtime::inclusion=trace,runtime::bridge=trace,xcm=trace,cumulus=trace", "--force-authoring" ]
+
+	[[parachains.collators]]
+	name = "bridge-hub-polkadot-collator2"
+	# we can't use `polkadot-parachain` here, because it can't build chain spec for us
+	command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{POLKADOT_BRIDGE_HUB_WASM_BLOB}} --binary {{POLKADOT_PARACHAIN_BINARY_PATH}}"
+	rpc_port = 8936
+	ws_port = 8946
+	args = [ "-lparachain=debug,runtime::inclusion=trace,runtime::bridge=trace,xcm=trace", "--force-authoring" ]
+
+[[parachains]]
+id = 1000
+cumulus_based = true
+chain_spec_path = "{{SCRIPT_FOLDER}}/networks/asset-hub-polkadot-local.json"
+
+	[[parachains.collators]]
+	name = "asset-hub-polkadot-collator1"
+	# we can't use `polkadot-parachain` here, because it can't build chain spec for us
+	command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{POLKADOT_ASSET_HUB_WASM_BLOB}} --binary {{POLKADOT_PARACHAIN_BINARY_PATH}}"
+	rpc_port = 9011
+	ws_port = 9010
+	args = [ "-lparachain=trace,xcm=trace,runtime::bridge=trace,runtime::inclusion=trace,cumulus=trace,sc_basic_authorship=trace,aura=trace,runtime::aura=trace", "--force-authoring" ]
+	# Polkadot Asset Hub uses ed keys in Aura (https://github.com/paritytech/cumulus/pull/923)
+	# (however it isn't enough because zombienet would use sr keys for initial validators => zombienet fix is required)
+	keystore_key_types = [ "aura_ed" ]
+
+	[[parachains.collators]]
+	name = "asset-hub-polkadot-collator2"
+	# we can't use `polkadot-parachain` here, because it can't build chain spec for us
+	command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{POLKADOT_ASSET_HUB_WASM_BLOB}} --binary {{POLKADOT_PARACHAIN_BINARY_PATH}}"
+	args = [ "-lparachain=trace,xcm=trace,runtime::bridge=trace,runtime::inclusion=trace,cumulus=trace,sc_basic_authorship=trace,aura=trace,runtime::aura=trace", "--force-authoring" ]
+	# Polkadot Asset Hub uses ed keys in Aura (https://github.com/paritytech/cumulus/pull/923)
+	# (however it isn't enough because zombienet would use sr keys for initial validators => zombienet fix is required)
+	keystore_key_types = [ "aura_ed" ]

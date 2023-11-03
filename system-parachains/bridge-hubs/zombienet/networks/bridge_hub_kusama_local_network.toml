@@ -1,0 +1,84 @@
+# build chain spec with staging-chain-spec-builder?
+
+[settings]
+node_spawn_timeout = 240
+
+[relaychain]
+# default_command is used to convert plain chain spec into raw form
+default_command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{KUSAMA_WASM_BLOB}}"
+# chain_spec_command is used to generate plain chain spec
+chain_spec_command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh build-spec --runtime-wasm-blob {{KUSAMA_WASM_BLOB}} --chain {{SCRIPT_FOLDER}}/networks/kusama-local.json"
+# and this is applied when we start actual binary
+default_args = [ "-lparachain=trace,xcm=trace,sync=trace,grandpa=trace,babe=trace,keystore=trace,cumulus=trace,runtime::parachains=trace,runtime::inclusion-inherent=trace" ]
+
+	[[relaychain.nodes]]
+	command = "{{POLKADOT_BINARY_PATH}}"
+	name = "alice-kusama-validator"
+	validator = true
+	rpc_port = 9932
+	ws_port = 9942
+	balance = 2000000000000
+
+	[[relaychain.nodes]]
+	command = "{{POLKADOT_BINARY_PATH}}"
+	name = "bob-kusama-validator"
+	validator = true
+	rpc_port = 9933
+	ws_port = 9943
+	balance = 2000000000000
+
+	[[relaychain.nodes]]
+	command = "{{POLKADOT_BINARY_PATH}}"
+	name = "charlie-kusama-validator"
+	validator = true
+	rpc_port = 9934
+	ws_port = 9944
+	balance = 2000000000000
+
+	[[relaychain.nodes]]
+	command = "{{POLKADOT_BINARY_PATH}}"
+	name = "dave-kusama-validator"
+	validator = true
+	rpc_port = 9935
+	ws_port = 9945
+	balance = 2000000000000
+
+[[parachains]]
+id = 1002
+cumulus_based = true
+chain_spec_path = "{{SCRIPT_FOLDER}}/networks/bridge-hub-kusama-local.json"
+
+	[[parachains.collators]]
+	name = "bridge-hub-kusama-collator1"
+	# we can't use `polkadot-parachain` here, because it can't build chain spec for us
+	command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{KUSAMA_BRIDGE_HUB_WASM_BLOB}} --binary {{POLKADOT_PARACHAIN_BINARY_PATH}}"
+	rpc_port = 8933
+	ws_port = 8943
+	args = [ "-lparachain=trace,runtime::inclusion=trace,runtime::bridge=trace,xcm=trace,cumulus=trace", "--force-authoring" ]
+
+	[[parachains.collators]]
+	name = "bridge-hub-kusama-collator2"
+	# we can't use `polkadot-parachain` here, because it can't build chain spec for us
+	command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{KUSAMA_BRIDGE_HUB_WASM_BLOB}} --binary {{POLKADOT_PARACHAIN_BINARY_PATH}}"
+	rpc_port = 8934
+	ws_port = 8944
+	args = [ "-lparachain=trace,runtime::inclusion=trace,runtime::bridge=trace,xcm=trace,cumulus=trace", "--force-authoring" ]
+
+[[parachains]]
+id = 1000
+cumulus_based = true
+chain_spec_path = "{{SCRIPT_FOLDER}}/networks/asset-hub-kusama-local.json"
+
+	[[parachains.collators]]
+	name = "asset-hub-kusama-collator1"
+	# we can't use `polkadot-parachain` here, because it can't build chain spec for us
+	command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{KUSAMA_ASSET_HUB_WASM_BLOB}} --binary {{POLKADOT_PARACHAIN_BINARY_PATH}}"
+	rpc_port = 9911
+	ws_port = 9910
+	args = [ "-lparachain=trace,xcm=trace,runtime::bridge=trace,runtime::inclusion=trace,cumulus=trace,sc_basic_authorship=trace,aura=trace,runtime::aura=trace", "--force-authoring" ]
+
+	[[parachains.collators]]
+	name = "asset-hub-kusama-collator2"
+	# we can't use `polkadot-parachain` here, because it can't build chain spec for us
+	command = "{{SCRIPT_FOLDER}}/scripts/build-chain-spec.sh --runtime-wasm-blob {{POLKADOT_ASSET_HUB_WASM_BLOB}} --binary {{POLKADOT_PARACHAIN_BINARY_PATH}}"
+	args = [ "-lparachain=trace,xcm=trace,runtime::bridge=trace,runtime::inclusion=trace,cumulus=trace,sc_basic_authorship=trace,aura=trace,runtime::aura=trace", "--force-authoring" ]
