@@ -15,6 +15,10 @@ log = { version = "0.4.20", default-features = false }
 scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 smallvec = "1.11.1"
 
+# Local
+bridge-hub-polkadot-runtime-constants = { path = "../../bridge-hubs/bridge-hub-polkadot/constants", default-features = false}
+polkadot-runtime-constants = { path = "../../../relay/polkadot/constants", default-features = false}
+
 # Substrate
 frame-benchmarking = { default-features = false, optional = true, version = "25.0.0" }
 frame-executive = { default-features = false, version = "25.0.0" }
@@ -59,7 +63,6 @@ pallet-xcm-benchmarks = { default-features = false, optional = true , version = 
 polkadot-core-primitives = { default-features = false, version = "4.0.0" }
 polkadot-parachain-primitives = { default-features = false, version = "3.0.0" }
 polkadot-runtime-common = { default-features = false, version = "4.0.0" }
-polkadot-runtime-constants = { path = "../../../relay/polkadot/constants", default-features = false}
 xcm = { package = "staging-xcm", default-features = false, version = "4.0.0" }
 xcm-builder = { package = "staging-xcm-builder", default-features = false, version = "4.0.0" }
 xcm-executor = { package = "staging-xcm-executor", default-features = false, version = "4.0.0" }
@@ -159,6 +162,7 @@ std = [
 	"bp-asset-hub-polkadot/std",
 	"bp-bridge-hub-kusama/std",
 	"bp-bridge-hub-polkadot/std",
+	"bridge-hub-polkadot-runtime-constants/std",
 	"codec/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-dmp-queue/std",

@@ -15,6 +15,10 @@ log = { version = "0.4.20", default-features = false }
 scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 smallvec = "1.11.1"
 
+# Local
+bridge-hub-kusama-runtime-constants = { path = "../../bridge-hubs/bridge-hub-kusama/constants", default-features = false}
+kusama-runtime-constants = { path = "../../../relay/kusama/constants", default-features = false}
+
 # Substrate
 frame-benchmarking = { default-features = false, optional = true, version = "25.0.0" }
 frame-executive = { default-features = false, version = "25.0.0" }
@@ -59,7 +63,6 @@ sp-weights = { default-features = false, version = "24.0.0" }
 primitive-types = { version = "0.12.2", default-features = false, features = ["codec", "scale-info", "num-traits"] }
 
 # Polkadot
-kusama-runtime-constants = { path = "../../../relay/kusama/constants", default-features = false}
 pallet-xcm = { default-features = false, version = "4.0.0" }
 pallet-xcm-benchmarks = { default-features = false, optional = true , version = "4.0.0" }
 polkadot-core-primitives = { default-features = false, version = "4.0.0" }
@@ -172,9 +175,10 @@ try-runtime = [
 std = [
 	"assets-common/std",
 	"bp-asset-hub-kusama/std",
-	"bp-bridge-hub-kusama/std",
 	"bp-asset-hub-polkadot/std",
+	"bp-bridge-hub-kusama/std",
 	"bp-bridge-hub-polkadot/std",
+	"bridge-hub-kusama-runtime-constants/std",
 	"codec/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-dmp-queue/std",
