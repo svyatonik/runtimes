@@ -622,7 +622,7 @@ pub mod bridging {
 				1,
 				X2(
 					Parachain(SiblingBridgeHubParaId::get()),
-					PalletInstance(bridge_hub_polkadot_runtime_constants::WITH_BRIDGE_POLKADOT_TO_KUSAMA_MESSAGES_PALLET_INDEX),
+					PalletInstance(bp_bridge_hub_polkadot::WITH_BRIDGE_POLKADOT_TO_KUSAMA_MESSAGES_PALLET_INDEX),
 				)
 			);
 
