@@ -534,7 +534,6 @@ dependencies = [
  "bp-asset-hub-polkadot",
  "bp-bridge-hub-kusama",
  "bp-bridge-hub-polkadot",
- "bridge-hub-kusama-runtime-constants",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -1129,13 +1128,11 @@ dependencies = [
 
 [[package]]
 name = "bp-bridge-hub-kusama"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30d129f760fbe4966d1235fa32eba21dd28bafc0e32e85f467c7c1b08a5f4a0d"
+version = "1.0.0"
 dependencies = [
- "bp-bridge-hub-cumulus",
  "bp-messages",
  "bp-runtime",
+ "bridge-hub-common",
  "frame-support",
  "sp-api",
  "sp-runtime",
@@ -1359,6 +1356,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bridge-hub-common"
+version = "0.1.0"
+dependencies = [
+ "bp-messages",
+ "bp-polkadot-core",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "polkadot-primitives",
+ "sp-api",
+ "sp-std",
+]
+
+[[package]]
 name = "bridge-hub-kusama-runtime"
 version = "1.0.0"
 dependencies = [
@@ -1374,7 +1385,6 @@ dependencies = [
  "bp-polkadot-core",
  "bp-relayers",
  "bp-runtime",
- "bridge-hub-kusama-runtime-constants",
  "bridge-hub-test-utils",
  "bridge-runtime-common",
  "cumulus-pallet-aura-ext",
@@ -1441,10 +1451,6 @@ dependencies = [
  "static_assertions",
  "substrate-wasm-builder",
 ]
-
-[[package]]
-name = "bridge-hub-kusama-runtime-constants"
-version = "1.0.0"
 
 [[package]]
 name = "bridge-hub-polkadot-runtime"
