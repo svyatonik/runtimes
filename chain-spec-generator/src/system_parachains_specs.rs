@@ -422,6 +422,8 @@ fn bridge_hub_polkadot_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 			..Default::default()
 		},
+		bridge_kusama_grandpa: Default::default(),
+		bridge_kusama_messages: Default::default(),
 	}
 }
 
@@ -511,6 +513,8 @@ fn bridge_hub_kusama_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 			..Default::default()
 		},
+		bridge_polkadot_grandpa: Default::default(),
+		bridge_polkadot_messages: Default::default(),
 	}
 }
 

@@ -259,6 +259,9 @@ pub fn polkadot_testnet_genesis(
 		paras: Default::default(),
 		xcm_pallet: Default::default(),
 		nomination_pools: Default::default(),
+		sudo: polkadot_runtime::SudoConfig {
+			key: endowed_accounts.first().cloned(),
+		},
 	}
 }
 
@@ -345,6 +348,9 @@ pub fn kusama_testnet_genesis(
 		xcm_pallet: Default::default(),
 		nomination_pools: Default::default(),
 		nis_counterpart_balances: Default::default(),
+		sudo: kusama_runtime::SudoConfig {
+			key: endowed_accounts.first().cloned(),
+		},
 	}
 }
 
