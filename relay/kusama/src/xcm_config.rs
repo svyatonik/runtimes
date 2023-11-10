@@ -115,6 +115,10 @@ parameter_types! {
 	pub const BaseDeliveryFee: u128 = CENTS.saturating_mul(3);
 }
 
+/// Price of downward messages.
+pub type PriceForChildParachainDelivery =
+	ExponentialPrice<FeeAssetId, BaseDeliveryFee, TransactionByteFee, Dmp>;
+
 /// The XCM router. When we want to send an XCM message, we use this type. It amalgamates all of our
 /// individual routers.
 pub type XcmRouter = WithUniqueTopic<(
@@ -122,7 +126,7 @@ pub type XcmRouter = WithUniqueTopic<(
 	ChildParachainRouter<
 		Runtime,
 		XcmPallet,
-		ExponentialPrice<FeeAssetId, BaseDeliveryFee, TransactionByteFee, Dmp>,
+		PriceForChildParachainDelivery,
 	>,
 )>;
 
