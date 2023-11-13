@@ -29,9 +29,7 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_runtime_constants::{
-	currency::CENTS,
-	system_parachain::{SystemParachains, *},
-	xcm::body::FELLOWSHIP_ADMIN_INDEX,
+	currency::CENTS, system_parachain::*, xcm::body::FELLOWSHIP_ADMIN_INDEX,
 };
 use runtime_common::{
 	crowdloan, paras_registrar,
@@ -139,12 +137,17 @@ parameter_types! {
 	pub const DotForStatemint: (MultiAssetFilter, MultiLocation) = (Dot::get(), StatemintLocation::get());
 	pub const CollectivesLocation: MultiLocation = Parachain(COLLECTIVES_ID).into_location();
 	pub const DotForCollectives: (MultiAssetFilter, MultiLocation) = (Dot::get(), CollectivesLocation::get());
+	pub const BridgeHubLocation: MultiLocation = Parachain(BRIDGE_HUB_ID).into_location();
+	pub const DotForBridgeHub: (MultiAssetFilter, MultiLocation) = (Dot::get(), BridgeHubLocation::get());
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
-/// Polkadot Relay recognizes/respects the Statemint chain as a teleporter.
-pub type TrustedTeleporters =
-	(xcm_builder::Case<DotForStatemint>, xcm_builder::Case<DotForCollectives>);
+/// Polkadot Relay recognizes/respects Statemint, Collectives, and BridgeHub chains as teleporters.
+pub type TrustedTeleporters = (
+	xcm_builder::Case<DotForStatemint>,
+	xcm_builder::Case<DotForCollectives>,
+	xcm_builder::Case<DotForBridgeHub>,
+);
 
 match_types! {
 	pub type OnlyParachains: impl Contains<MultiLocation> = {

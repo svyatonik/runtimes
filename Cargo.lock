@@ -530,6 +530,10 @@ version = "1.0.0"
 dependencies = [
  "asset-test-utils",
  "assets-common",
+ "bp-asset-hub-kusama",
+ "bp-asset-hub-polkadot",
+ "bp-bridge-hub-kusama",
+ "bp-bridge-hub-polkadot",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -569,11 +573,13 @@ dependencies = [
  "pallet-utility",
  "pallet-xcm",
  "pallet-xcm-benchmarks",
+ "pallet-xcm-bridge-hub-router",
  "parachains-common",
  "parity-scale-codec",
  "polkadot-core-primitives",
  "polkadot-parachain-primitives",
  "polkadot-runtime-common",
+ "polkadot-runtime-constants",
  "primitive-types",
  "scale-info",
  "smallvec",
@@ -604,6 +610,10 @@ version = "1.0.0"
 dependencies = [
  "asset-test-utils",
  "assets-common",
+ "bp-asset-hub-kusama",
+ "bp-asset-hub-polkadot",
+ "bp-bridge-hub-kusama",
+ "bp-bridge-hub-polkadot",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -620,6 +630,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "kusama-runtime-constants",
  "log",
  "pallet-asset-tx-payment",
  "pallet-assets",
@@ -639,6 +650,7 @@ dependencies = [
  "pallet-utility",
  "pallet-xcm",
  "pallet-xcm-benchmarks",
+ "pallet-xcm-bridge-hub-router",
  "parachains-common",
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -1075,6 +1087,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-asset-hub-kusama"
+version = "1.0.0"
+dependencies = [
+ "bp-xcm-bridge-hub-router",
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-std",
+ "staging-xcm",
+]
+
+[[package]]
+name = "bp-asset-hub-polkadot"
+version = "1.0.0"
+dependencies = [
+ "bp-xcm-bridge-hub-router",
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-std",
+ "staging-xcm",
+]
+
+[[package]]
 name = "bp-bridge-hub-cumulus"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1087,6 +1123,32 @@ dependencies = [
  "frame-system",
  "polkadot-primitives",
  "sp-api",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-bridge-hub-kusama"
+version = "1.0.0"
+dependencies = [
+ "bp-bridge-hub-cumulus",
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-bridge-hub-polkadot"
+version = "1.0.0"
+dependencies = [
+ "bp-bridge-hub-cumulus",
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "sp-api",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -1139,6 +1201,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-kusama"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d69f61df356df3dbedf2dfbfec65ce673ff80121ad7eb319b84a093ebc24aaf9"
+dependencies = [
+ "bp-header-chain",
+ "bp-polkadot-core",
+ "bp-runtime",
+ "frame-support",
+ "sp-api",
+ "sp-std",
+]
+
+[[package]]
 name = "bp-messages"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1169,6 +1245,20 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-polkadot"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2643dd8c1c9f82517cb0f438bb66533e8f0b54d8c4b063d24f835aa620e4034"
+dependencies = [
+ "bp-header-chain",
+ "bp-polkadot-core",
+ "bp-runtime",
+ "frame-support",
+ "sp-api",
  "sp-std",
 ]
 
@@ -1267,7 +1357,20 @@ dependencies = [
 name = "bridge-hub-kusama-runtime"
 version = "1.0.0"
 dependencies = [
+ "bp-asset-hub-kusama",
+ "bp-asset-hub-polkadot",
+ "bp-bridge-hub-kusama",
+ "bp-bridge-hub-polkadot",
+ "bp-header-chain",
+ "bp-kusama",
+ "bp-messages",
+ "bp-parachains",
+ "bp-polkadot",
+ "bp-polkadot-core",
+ "bp-relayers",
+ "bp-runtime",
  "bridge-hub-test-utils",
+ "bridge-runtime-common",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -1289,6 +1392,10 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-bridge-grandpa",
+ "pallet-bridge-messages",
+ "pallet-bridge-parachains",
+ "pallet-bridge-relayers",
  "pallet-collator-selection",
  "pallet-multisig",
  "pallet-session",
@@ -1313,6 +1420,7 @@ dependencies = [
  "sp-genesis-builder",
  "sp-inherents",
  "sp-io",
+ "sp-keyring",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
@@ -1324,6 +1432,7 @@ dependencies = [
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
+ "static_assertions",
  "substrate-wasm-builder",
 ]
 
@@ -1331,7 +1440,20 @@ dependencies = [
 name = "bridge-hub-polkadot-runtime"
 version = "1.0.0"
 dependencies = [
+ "bp-asset-hub-kusama",
+ "bp-asset-hub-polkadot",
+ "bp-bridge-hub-kusama",
+ "bp-bridge-hub-polkadot",
+ "bp-header-chain",
+ "bp-kusama",
+ "bp-messages",
+ "bp-parachains",
+ "bp-polkadot",
+ "bp-polkadot-core",
+ "bp-relayers",
+ "bp-runtime",
  "bridge-hub-test-utils",
+ "bridge-runtime-common",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -1352,6 +1474,10 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-bridge-grandpa",
+ "pallet-bridge-messages",
+ "pallet-bridge-parachains",
+ "pallet-bridge-relayers",
  "pallet-collator-selection",
  "pallet-multisig",
  "pallet-session",
@@ -1377,6 +1503,7 @@ dependencies = [
  "sp-genesis-builder",
  "sp-inherents",
  "sp-io",
+ "sp-keyring",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
@@ -1388,6 +1515,7 @@ dependencies = [
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
+ "static_assertions",
  "substrate-wasm-builder",
 ]
 
@@ -1473,6 +1601,7 @@ dependencies = [
  "sp-trie",
  "staging-xcm",
  "staging-xcm-builder",
+ "static_assertions",
 ]
 
 [[package]]
@@ -8129,6 +8258,7 @@ dependencies = [
  "pallet-staking-reward-curve",
  "pallet-staking-reward-fn",
  "pallet-staking-runtime-api",
+ "pallet-sudo",
  "pallet-timestamp",
  "pallet-tips",
  "pallet-transaction-payment",
@@ -11482,6 +11612,7 @@ dependencies = [
  "pallet-staking",
  "pallet-staking-runtime-api",
  "pallet-state-trie-migration",
+ "pallet-sudo",
  "pallet-timestamp",
  "pallet-tips",
  "pallet-transaction-payment",

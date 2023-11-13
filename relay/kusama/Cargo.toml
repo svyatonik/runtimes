@@ -82,10 +82,11 @@ pallet-referenda = { default-features = false , version = "25.0.0" }
 pallet-scheduler = { default-features = false , version = "26.0.0" }
 pallet-session = { default-features = false , version = "25.0.0" }
 pallet-society = { default-features = false, version = "25.0.0" }
-frame-support = { default-features = false , version = "25.0.0" }
+frame-support = { default-features = false , version = "25.0.0", features = [ "tuples-96" ] }
 pallet-staking = { default-features = false , version = "25.0.0" }
 pallet-state-trie-migration = { default-features = false , version = "26.0.0" }
 pallet-staking-runtime-api = { default-features = false , version = "11.0.0" }
+pallet-sudo = { default-features = false , version = "25.0.0" }
 frame-system = { default-features = false , version = "25.0.0" }
 frame-system-rpc-runtime-api = { default-features = false , version = "23.0.0" }
 pallet-timestamp = { default-features = false , version = "24.0.0" }
@@ -150,8 +151,8 @@ std = [
 	"inherents/std",
 	"kusama-runtime-constants/std",
 	"log/std",
-	"pallet-asset-rate/std",
 	"offchain-primitives/std",
+	"pallet-asset-rate/std",
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-babe/std",
@@ -194,6 +195,7 @@ std = [
 	"pallet-staking-runtime-api/std",
 	"pallet-staking/std",
 	"pallet-state-trie-migration/std",
+	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"pallet-tips/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",

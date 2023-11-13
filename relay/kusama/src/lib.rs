@@ -1672,6 +1672,7 @@ construct_runtime! {
 
 		// Asset rate.
 		AssetRate: pallet_asset_rate::{Pallet, Call, Storage, Event<T>} = 101,
+		Sudo: pallet_sudo = 255,
 	}
 }
 
@@ -2820,4 +2821,10 @@ mod init_state_migration {
 			Ok(())
 		}
 	}
+}
+
+impl pallet_sudo::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type WeightInfo = ();
 }
