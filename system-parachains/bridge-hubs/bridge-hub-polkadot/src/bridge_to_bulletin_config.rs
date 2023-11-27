@@ -35,7 +35,7 @@ use bridge_runtime_common::{
 		XcmBlobMessageDispatch,
 	},
 	refund_relayer_extension::{
-		ActualFeeRefund, RefundBridgedGrandpaMessages, RefundSignedExtensionAdapter,
+		ActualFeeRefund, RefundableMessagesLane, RefundBridgedGrandpaMessages, RefundSignedExtensionAdapter,
 	},
 };
 use cumulus_primitives_core::ParentThen;
@@ -104,22 +104,25 @@ parameter_types! {
 	/// delivery transaction.
 	///
 	/// It is determined semi-automatically - see `FEE_BOOST_PER_MESSAGE` constant to get the
-	/// meaning of this value
+	/// meaning of this value.
 	pub PriorityBoostPerMessage: u64 = 1_820_444_444_444;
 }
 
 /// Add GRANDPA bridge pallet to track Polkadot Bulletin Chain.
-pub type BridgeGrandpaBulletinInstance = pallet_bridge_grandpa::Instance2;
-impl pallet_bridge_grandpa::Config<BridgeGrandpaBulletinInstance> for Runtime {
+pub type BridgeGrandpaPolkadotBulletinInstance = pallet_bridge_grandpa::Instance2;
+impl pallet_bridge_grandpa::Config<BridgeGrandpaPolkadotBulletinInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type BridgedChain = bp_polkadot_bulletin::PolkadotBulletin;
 	type MaxFreeMandatoryHeadersPerBlock = ConstU32<4>;
 	type HeadersToKeep = RelayChainHeadersToKeep;
-	// technically this is incorrect - we have two pallet instances and ideally we shall
+	// Technically this is incorrect - we have two pallet instances and ideally we shall
 	// benchmark every instance separately. But the benchmarking engine has a flaw - it
 	// messes with components. E.g. in Kusama maximal validators count is 1024 and in
 	// Bulletin chain it is 100. But benchmarking engine runs Bulletin benchmarks using
 	// components range, computed for Kusama => it causes an error.
+	//
+	// In practice, however, GRANDPA pallet works the same way for all bridged chains, so
+	// weights are also the same for both bridges.
 	type WeightInfo = weights::pallet_bridge_grandpa::WeightInfo<Runtime>;
 }
 
@@ -228,8 +231,11 @@ impl ThisChainWithMessages for BridgeHubPolkadot {
 pub type RefundPolkadotBulletinMessages = RefundSignedExtensionAdapter<
 	RefundBridgedGrandpaMessages<
 		Runtime,
-		BridgeGrandpaBulletinInstance,
-		WithPolkadotBulletinMessagesInstance,
+		BridgeGrandpaPolkadotBulletinInstance,
+		RefundableMessagesLane<
+			WithPolkadotBulletinMessagesInstance,
+			KawabungaToPolkadotBulletinMessagesLane,
+		>,
 		ActualFeeRefund<Runtime>,
 		PriorityBoostPerMessage,
 		StrRefundPolkadotBulletinMessages,
@@ -280,7 +286,7 @@ mod tests {
 	fn ensure_bridge_integrity() {
 		assert_complete_bridge_types!(
 			runtime: Runtime,
-			with_bridged_chain_grandpa_instance: BridgeGrandpaBulletinInstance,
+			with_bridged_chain_grandpa_instance: BridgeGrandpaPolkadotBulletinInstance,
 			with_bridged_chain_messages_instance: WithPolkadotBulletinMessagesInstance,
 			bridge: WithPolkadotBulletinMessageBridge,
 			this_chain: bp_polkadot::Polkadot,
@@ -289,7 +295,7 @@ mod tests {
 
 		assert_complete_bridge_constants::<
 			Runtime,
-			BridgeGrandpaBulletinInstance,
+			BridgeGrandpaPolkadotBulletinInstance,
 			WithPolkadotBulletinMessagesInstance,
 			WithPolkadotBulletinMessageBridge,
 		>(AssertCompleteBridgeConstants {

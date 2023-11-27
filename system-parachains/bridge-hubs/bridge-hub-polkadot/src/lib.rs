@@ -104,16 +104,19 @@ pub type SignedExtra = (
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 	BridgeRejectObsoleteHeadersAndMessages,
 	bridge_to_kusama_config::RefundBridgeHubKusamaMessages,
+	bridge_to_bulletin_config::RefundPolkadotBulletinMessages,
 );
 
 bridge_runtime_common::generate_bridge_reject_obsolete_headers_and_messages! {
 	RuntimeCall, AccountId,
 	// Grandpa
 	BridgeKusamaGrandpa,
+	BridgePolkadotBulletinGrandpa,
 	// Parachains
 	BridgeKusamaParachains,
 	// Messages
-	BridgeKusamaMessages
+	BridgeKusamaMessages,
+	BridgePolkadotBulletinMessages
 }
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -940,7 +943,9 @@ impl_runtime_apis! {
 			}
 
 			use bridge_runtime_common::messages_benchmarking::{
+				prepare_message_delivery_proof_from_grandpa_chain,
 				prepare_message_delivery_proof_from_parachain,
+				prepare_message_proof_from_grandpa_chain,
 				prepare_message_proof_from_parachain,
 				generate_xcm_builder_bridge_message_sample,
 			};
@@ -1005,7 +1010,7 @@ impl_runtime_apis! {
 					use cumulus_primitives_core::XcmpMessageSource;
 					assert!(XcmpQueue::take_outbound_messages(usize::MAX).is_empty());
 					ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(42.into());
-					prepare_message_proof_from_parachain::<
+					prepare_message_delivery_proof_from_grandpa_chain::<
 						Runtime,
 						bridge_to_bulletin_config::BridgeGrandpaBulletinInstance,
 						bridge_to_bulletin_config::WithPolkadotBulletinMessageBridge,
@@ -1015,7 +1020,7 @@ impl_runtime_apis! {
 				fn prepare_message_delivery_proof(
 					params: MessageDeliveryProofParams<AccountId>,
 				) -> bridge_to_bulletin_config::ToPolkadotBulletinMessagesDeliveryProof {
-					prepare_message_delivery_proof_from_parachain::<
+					prepare_message_proof_from_grandpa_chain::<
 						Runtime,
 						bridge_to_bulletin_config::BridgeGrandpaBulletinInstance,
 						bridge_to_bulletin_config::WithPolkadotBulletinMessageBridge,
