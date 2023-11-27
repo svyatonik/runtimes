@@ -85,6 +85,7 @@ parachains-common = { default-features = false , version = "4.0.0" }
 bp-header-chain = { default-features = false , version = "0.4.0" }
 bp-messages = { default-features = false , version = "0.4.0" }
 bp-parachains = { default-features = false , version = "0.4.0" }
+bp-polkadot-bulletin = { default-features = false , version = "0.1.0" }
 bp-polkadot-core = { default-features = false , version = "0.4.0" }
 bp-relayers = { default-features = false , version = "0.4.0" }
 bp-runtime = { default-features = false , version = "0.4.0" }
@@ -113,6 +114,7 @@ std = [
 	"bp-kusama/std",
 	"bp-messages/std",
 	"bp-parachains/std",
+	"bp-polkadot-bulletin/std",
 	"bp-polkadot-core/std",
 	"bp-polkadot/std",
 	"bp-relayers/std",

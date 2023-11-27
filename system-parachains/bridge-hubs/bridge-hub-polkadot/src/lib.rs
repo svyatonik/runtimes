@@ -22,6 +22,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+pub mod bridge_to_bulletin_config;
 pub mod bridge_to_kusama_config;
 mod weights;
 pub mod xcm_config;
@@ -474,6 +475,10 @@ construct_runtime!(
 		BridgeKusamaGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 51,
 		BridgeKusamaParachains: pallet_bridge_parachains::<Instance1>::{Pallet, Call, Storage, Event<T>} = 52,
 		BridgeKusamaMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 53,
+
+		// Polkadot Bulletin bridge pallets.
+		BridgePolkadotBulletinGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 55,
+		BridgePolkadotBulletinMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 56,
 	}
 );
 
@@ -499,10 +504,12 @@ mod benches {
 		[pallet_xcm_benchmarks::generic, XcmGeneric]
 		// Shared bridge pallets
 		[pallet_bridge_relayers, BridgeRelayersBench::<Runtime>]
-		// Polkadot bridge pallets.
+		// Kusama bridge pallets.
 		[pallet_bridge_grandpa, KusamaFinality]
 		[pallet_bridge_parachains, KusamaParachains]
 		[pallet_bridge_messages, KusamaMessages]
+		// Polkadot Bulletin bridge pallets.
+		[pallet_bridge_messages, PolkadotBulletinMessages]
 	);
 }
 
@@ -977,6 +984,41 @@ impl_runtime_apis! {
 						Runtime,
 						bridge_to_kusama_config::BridgeGrandpaKusamaInstance,
 						bridge_to_kusama_config::WithBridgeHubKusamaMessageBridge,
+					>(params)
+				}
+
+				fn is_message_successfully_dispatched(_nonce: bp_messages::MessageNonce) -> bool {
+					use cumulus_primitives_core::XcmpMessageSource;
+					!XcmpQueue::take_outbound_messages(usize::MAX).is_empty()
+				}
+			}
+
+			impl BridgeMessagesConfig<bridge_to_bulletin_config::WithPolkadotBulletinMessagesInstance> for Runtime {
+				fn is_relayer_rewarded(_relayer: &Self::AccountId) -> bool {
+					// we expect no rewards apart from the refunds
+					true
+				}
+
+				fn prepare_message_proof(
+					params: MessageProofParams,
+				) -> (bridge_to_bulletin_config::FromPolkadotBulletinMessagesProof, Weight) {
+					use cumulus_primitives_core::XcmpMessageSource;
+					assert!(XcmpQueue::take_outbound_messages(usize::MAX).is_empty());
+					ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(42.into());
+					prepare_message_proof_from_parachain::<
+						Runtime,
+						bridge_to_bulletin_config::BridgeGrandpaBulletinInstance,
+						bridge_to_bulletin_config::WithPolkadotBulletinMessageBridge,
+					>(params, generate_xcm_builder_bridge_message_sample(X2(GlobalConsensus(Polkadot), Parachain(42))))
+				}
+
+				fn prepare_message_delivery_proof(
+					params: MessageDeliveryProofParams<AccountId>,
+				) -> bridge_to_bulletin_config::ToPolkadotBulletinMessagesDeliveryProof {
+					prepare_message_delivery_proof_from_parachain::<
+						Runtime,
+						bridge_to_bulletin_config::BridgeGrandpaBulletinInstance,
+						bridge_to_bulletin_config::WithPolkadotBulletinMessageBridge,
 					>(params)
 				}
 

@@ -264,7 +264,7 @@ impl MessageBridge for WithBridgeHubKusamaMessageBridge {
 	>;
 }
 
-/// Message verifier for BridgeHubKusama messages sent from BridgeHubPolkadot
+/// Message verifier for BridgeHubKusama messages sent from BridgeHubPolkadot.
 pub type ToBridgeHubKusamaMessageVerifier =
 	messages::source::FromThisChainMessageVerifier<WithBridgeHubKusamaMessageBridge>;
 

@@ -1267,6 +1267,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-polkadot-bulletin"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2f8fbec4742d67de529a5f5de7ee30ccb501a94ef5db29dede9e5d3bb4d8493"
+dependencies = [
+ "bp-header-chain",
+ "bp-messages",
+ "bp-polkadot-core",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "bp-polkadot-core"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1453,6 +1472,7 @@ dependencies = [
  "bp-messages",
  "bp-parachains",
  "bp-polkadot",
+ "bp-polkadot-bulletin",
  "bp-polkadot-core",
  "bp-relayers",
  "bp-runtime",
