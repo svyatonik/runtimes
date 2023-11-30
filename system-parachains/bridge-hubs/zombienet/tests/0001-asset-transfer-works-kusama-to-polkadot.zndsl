@@ -1,0 +1,26 @@
+Description: User is able to transfer KSM from Kusama Asset Hub to Polkadot Asset Hub
+Network: ../networks/bridge_hub_polkadot_local_network.toml
+Creds: config
+
+# step 1: initialize Polkadot asset hub
+asset-hub-polkadot-collator1: run ../scripts/invoke-script.sh with "init-asset-hub-polkadot-local" within 300 seconds
+asset-hub-polkadot-collator1: js-script ../helpers/wait-hrmp-channel-opened.js with "1002" within 400 seconds
+
+# step 2: initialize Polkadot bridge hub
+bridge-hub-polkadot-collator1: run ../scripts/invoke-script.sh with "init-bridge-hub-polkadot-local" within 120 seconds
+
+# step 3: relay is started elsewhere - let's wait until with-Kusama GRANPDA pallet is initialized at Polkadot
+bridge-hub-polkadot-collator1: js-script ../helpers/best-finalized-header-at-bridged-chain.js with "Kusama,0" within 400 seconds
+
+# step 2: send DOT to Kusama
+asset-hub-polkadot-collator1: run ../scripts/invoke-script.sh with "reserve-transfer-assets-from-asset-hub-polkadot-local" within 60 seconds
+
+# step 3: elsewhere Kusama has sent KSM to //Alice - let's wait for it
+asset-hub-polkadot-collator1: js-script ../helpers/wrapped-assets-balance.js with "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY,0,Kusama" within 600 seconds
+
+# step 4: check that the relayer //Charlie is rewarded by both our AH and target AH
+bridge-hub-polkadot-collator1: js-script ../helpers/relayer-rewards.js with "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y,0x00000001,0x62686B73,BridgedChain,0" within 300 seconds
+bridge-hub-polkadot-collator1: js-script ../helpers/relayer-rewards.js with "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y,0x00000001,0x62686B73,ThisChain,0" within 300 seconds
+
+# wait until other network test has completed OR exit with an error too
+asset-hub-polkadot-collator1: run ../scripts/sync-exit.sh within 600 seconds
