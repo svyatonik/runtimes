@@ -50,13 +50,13 @@ impl<T: frame_system::Config> pallet_bridge_grandpa::WeightInfo for WeightInfo<T
 		// Proof Size summary in bytes:
 		//  Measured:  `231 + p * (60 ±0)`
 		//  Estimated: `51735`
-		// Minimum execution time: 371_633_000 picoseconds.
-		Weight::from_parts(374_020_000, 0)
+		// Minimum execution time: 368_161_000 picoseconds.
+		Weight::from_parts(76_463_974, 0)
 			.saturating_add(Weight::from_parts(0, 51735))
-			// Standard Error: 6_429
-			.saturating_add(Weight::from_parts(61_709_536, 0).saturating_mul(p.into()))
-			// Standard Error: 49_610
-			.saturating_add(Weight::from_parts(794_239, 0).saturating_mul(v.into()))
+			// Standard Error: 7_393
+			.saturating_add(Weight::from_parts(61_698_143, 0).saturating_mul(p.into()))
+			// Standard Error: 123_310
+			.saturating_add(Weight::from_parts(3_056_651, 0).saturating_mul(v.into()))
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
