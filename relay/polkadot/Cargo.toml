@@ -70,6 +70,7 @@ pallet-staking-reward-fn = { workspace = true }
 pallet-staking-reward-curve = { workspace = true }
 pallet-staking-runtime-api = { workspace = true }
 pallet-state-trie-migration = { workspace = true }
+pallet-sudo = { workspace = true }
 frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
 polkadot-runtime-constants = { workspace = true }
@@ -166,6 +167,7 @@ std = [
 	"pallet-staking-runtime-api/std",
 	"pallet-staking/std",
 	"pallet-state-trie-migration/std",
+	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
