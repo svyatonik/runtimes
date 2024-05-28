@@ -169,6 +169,8 @@ penpal-emulated-chain = { path = "integration-tests/emulated/chains/parachains/t
 penpal-runtime = { version = "0.15.1" }
 people-kusama-emulated-chain = { path = "integration-tests/emulated/chains/parachains/people/people-kusama" }
 people-kusama-runtime = { path = "system-parachains/people/people-kusama" }
+ping-kusama-runtime = { path = "system-parachains/ping-pong/ping-kusama" }
+pong-polkadot-runtime = { path = "system-parachains/ping-pong/pong-polkadot" }
 polkadot-core-primitives = { version = "8.0.0", default-features = false }
 polkadot-emulated-chain = { path = "integration-tests/emulated/chains/relays/polkadot" }
 polkadot-parachain-primitives = { version = "7.0.0", default-features = false }
@@ -277,6 +279,8 @@ members = [
 	"system-parachains/encointer",
 	"system-parachains/gluttons/glutton-kusama",
 	"system-parachains/people/people-kusama",
+	"system-parachains/ping-pong/ping-kusama",
+	"system-parachains/ping-pong/pong-polkadot",
 	"integration-tests/zombienet",
 ]
 

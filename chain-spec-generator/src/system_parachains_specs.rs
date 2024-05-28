@@ -50,6 +50,10 @@ pub type CoretimeKusamaChainSpec = sc_chain_spec::GenericChainSpec<(), Extension
 
 pub type PeopleKusamaChainSpec = sc_chain_spec::GenericChainSpec<(), Extensions>;
 
+pub type PingKusamaChainSpec = sc_chain_spec::GenericChainSpec<(), Extensions>;
+
+pub type PongPolkadotChainSpec = sc_chain_spec::GenericChainSpec<(), Extensions>;
+
 const ASSET_HUB_POLKADOT_ED: Balance = asset_hub_polkadot_runtime::ExistentialDeposit::get();
 
 const ASSET_HUB_KUSAMA_ED: Balance = asset_hub_kusama_runtime::ExistentialDeposit::get();
@@ -65,6 +69,10 @@ const ENCOINTER_KUSAMA_ED: Balance = encointer_kusama_runtime::ExistentialDeposi
 const CORETIME_KUSAMA_ED: Balance = coretime_kusama_runtime::ExistentialDeposit::get();
 
 const PEOPLE_KUSAMA_ED: Balance = people_kusama_runtime::ExistentialDeposit::get();
+
+const PING_KUSAMA_ED: Balance = ping_kusama_runtime::ExistentialDeposit::get();
+
+const PONG_POLKADOT_ED: Balance = pong_polkadot_runtime::ExistentialDeposit::get();
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -142,6 +150,20 @@ pub fn bridge_hub_kusama_session_keys(keys: AuraId) -> bridge_hub_kusama_runtime
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
 pub fn people_kusama_session_keys(keys: AuraId) -> people_kusama_runtime::SessionKeys {
 	people_kusama_runtime::SessionKeys { aura: keys }
+}
+
+/// Generate the session keys from individual elements.
+///
+/// The input must be a tuple of individual keys (a single arg for now since we have just one key).
+pub fn ping_kusama_session_keys(keys: AuraId) -> ping_kusama_runtime::SessionKeys {
+	ping_kusama_runtime::SessionKeys { aura: keys }
+}
+
+/// Generate the session keys from individual elements.
+///
+/// The input must be a tuple of individual keys (a single arg for now since we have just one key).
+pub fn pong_polkadot_session_keys(keys: AuraId) -> pong_polkadot_runtime::SessionKeys {
+	pong_polkadot_runtime::SessionKeys { aura: keys }
 }
 
 // AssetHubPolkadot
@@ -753,6 +775,150 @@ pub fn people_kusama_local_testnet_config() -> Result<Box<dyn ChainSpec>, String
 		.with_id("people-kusama-local")
 		.with_chain_type(ChainType::Local)
 		.with_genesis_config_patch(people_kusama_local_genesis(1004.into()))
+		.with_properties(properties)
+		.build(),
+	))
+}
+
+// PingKusama
+fn ping_kusama_genesis(
+	invulnerables: Vec<(AccountId, AuraId)>,
+	endowed_accounts: Vec<AccountId>,
+	id: ParaId,
+) -> serde_json::Value {
+	serde_json::json!({
+		"balances": ping_kusama_runtime::BalancesConfig {
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, PING_KUSAMA_ED * 4096 * 4096))
+				.collect(),
+		},
+		"parachainInfo": ping_kusama_runtime::ParachainInfoConfig {
+			parachain_id: id,
+			..Default::default()
+		},
+		"collatorSelection": ping_kusama_runtime::CollatorSelectionConfig {
+			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
+			candidacy_bond: PING_KUSAMA_ED * 16,
+			..Default::default()
+		},
+		"session": ping_kusama_runtime::SessionConfig {
+			keys: invulnerables
+				.into_iter()
+				.map(|(acc, aura)| {
+					(
+						acc.clone(),                         // account id
+						acc,                                 // validator id
+						ping_kusama_session_keys(aura),      // session keys
+					)
+				})
+				.collect(),
+		},
+		"polkadotXcm": {
+			"safeXcmVersion": Some(SAFE_XCM_VERSION),
+		},
+		// no need to pass anything to aura, in fact it will panic if we do. Session will take care
+		// of this. `aura: Default::default()`
+	})
+}
+
+fn ping_kusama_local_genesis(para_id: ParaId) -> serde_json::Value {
+	ping_kusama_genesis(
+		// initial collators.
+		invulnerables(),
+		testnet_accounts(),
+		para_id,
+	)
+}
+
+pub fn ping_kusama_local_testnet_config() -> Result<Box<dyn ChainSpec>, String> {
+	let mut properties = sc_chain_spec::Properties::new();
+	properties.insert("ss58Format".into(), 2.into());
+	properties.insert("tokenSymbol".into(), "KSM".into());
+	properties.insert("tokenDecimals".into(), 12.into());
+
+	Ok(Box::new(
+		PingKusamaChainSpec::builder(
+			ping_kusama_runtime::WASM_BINARY.expect("PingKusama wasm not available!"),
+			Extensions { relay_chain: "kusama-local".into(), para_id: 5000 },
+		)
+		.with_name("Ping Kusama Local")
+		.with_id("ping-kusama-local")
+		.with_chain_type(ChainType::Local)
+		.with_genesis_config_patch(ping_kusama_local_genesis(5000.into()))
+		.with_properties(properties)
+		.build(),
+	))
+}
+
+// PongPolkadot
+fn pong_polkadot_genesis(
+	invulnerables: Vec<(AccountId, AuraId)>,
+	endowed_accounts: Vec<AccountId>,
+	id: ParaId,
+) -> serde_json::Value {
+	serde_json::json!({
+		"balances": pong_polkadot_runtime::BalancesConfig {
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, PONG_POLKADOT_ED * 4096 * 4096))
+				.collect(),
+		},
+		"parachainInfo": pong_polkadot_runtime::ParachainInfoConfig {
+			parachain_id: id,
+			..Default::default()
+		},
+		"collatorSelection": pong_polkadot_runtime::CollatorSelectionConfig {
+			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
+			candidacy_bond: PONG_POLKADOT_ED * 16,
+			..Default::default()
+		},
+		"session": pong_polkadot_runtime::SessionConfig {
+			keys: invulnerables
+				.into_iter()
+				.map(|(acc, aura)| {
+					(
+						acc.clone(),                         // account id
+						acc,                                 // validator id
+						pong_polkadot_session_keys(aura),    // session keys
+					)
+				})
+				.collect(),
+		},
+		"polkadotXcm": {
+			"safeXcmVersion": Some(SAFE_XCM_VERSION),
+		},
+		// no need to pass anything to aura, in fact it will panic if we do. Session will take care
+		// of this. `aura: Default::default()`
+	})
+}
+
+fn pong_polkadot_local_genesis(para_id: ParaId) -> serde_json::Value {
+	pong_polkadot_genesis(
+		// initial collators.
+		invulnerables(),
+		testnet_accounts(),
+		para_id,
+	)
+}
+
+pub fn pong_polkadot_local_testnet_config() -> Result<Box<dyn ChainSpec>, String> {
+	let mut properties = sc_chain_spec::Properties::new();
+	properties.insert("ss58Format".into(), 2.into());
+	properties.insert("tokenSymbol".into(), "KSM".into());
+	properties.insert("tokenDecimals".into(), 12.into());
+
+	Ok(Box::new(
+		PongPolkadotChainSpec::builder(
+			pong_polkadot_runtime::WASM_BINARY.expect("PingPolkadot wasm not available!"),
+			Extensions { relay_chain: "polkadot-local".into(), para_id: 5000 },
+		)
+		.with_name("Ping Polkadot Local")
+		.with_id("pong-polkadot-local")
+		.with_chain_type(ChainType::Local)
+		.with_genesis_config_patch(pong_polkadot_local_genesis(5000.into()))
 		.with_properties(properties)
 		.build(),
 	))
