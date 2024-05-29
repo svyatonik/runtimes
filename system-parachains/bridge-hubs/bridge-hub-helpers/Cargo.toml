@@ -1,0 +1,36 @@
+[package]
+authors.workspace = true
+description = "BridgeHub runtime helpers"
+edition.workspace = true
+license.workspace = true
+name = "bridge-hub-helpers"
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+impl-trait-for-tuples = "0.2.2"
+
+# Bridge Dependencies
+bp-messages = { workspace = true }
+bridge-runtime-common = { workspace = true }
+pallet-bridge-messages = { workspace = true }
+pallet-xcm-bridge-hub = { workspace = true }
+
+# Substrate Dependencies
+sp-runtime = { workspace = true }
+
+# Polkadot Dependencies
+xcm = { workspace = true }
+xcm-executor = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+	"bp-messages/std",
+	"bridge-runtime-common/std",
+	"sp-runtime/std",
+	"pallet-bridge-messages/std",
+	"pallet-xcm-bridge-hub/std",
+	"xcm/std",
+	"xcm-executor/std",
+]

@@ -23,6 +23,7 @@ bp-asset-hub-kusama = { workspace = true }
 bp-asset-hub-polkadot = { workspace = true }
 bp-bridge-hub-kusama = { workspace = true }
 bp-bridge-hub-polkadot = { workspace = true }
+bridge-hub-helpers = { workspace = true }
 kusama-runtime-constants = { workspace = true }
 polkadot-runtime-constants = { workspace = true }
 
@@ -141,6 +142,7 @@ std = [
 	"bp-relayers/std",
 	"bp-runtime/std",
 	"bridge-hub-common/std",
+	"bridge-hub-helpers/std",
 	"bridge-runtime-common/std",
 	"codec/std",
 	"cumulus-pallet-aura-ext/std",

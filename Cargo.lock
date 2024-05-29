@@ -1763,6 +1763,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bridge-hub-helpers"
+version = "1.0.0"
+dependencies = [
+ "bp-messages",
+ "bridge-runtime-common",
+ "impl-trait-for-tuples",
+ "pallet-bridge-messages",
+ "pallet-xcm-bridge-hub",
+ "sp-runtime 32.0.0",
+ "staging-xcm",
+ "staging-xcm-executor",
+]
+
+[[package]]
 name = "bridge-hub-kusama-emulated-chain"
 version = "1.0.0"
 dependencies = [
@@ -1828,6 +1842,7 @@ dependencies = [
  "bp-relayers",
  "bp-runtime",
  "bridge-hub-common",
+ "bridge-hub-helpers",
  "bridge-hub-test-utils",
  "bridge-runtime-common",
  "cumulus-pallet-aura-ext",

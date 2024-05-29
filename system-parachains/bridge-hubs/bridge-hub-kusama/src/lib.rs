@@ -115,6 +115,7 @@ pub type SignedExtra = (
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 	BridgeRejectObsoleteHeadersAndMessages,
 	bridge_to_polkadot_config::RefundBridgeHubPolkadotMessages,
+	bridge_to_polkadot_config::RefundPingPongMessages,
 );
 
 bridge_runtime_common::generate_bridge_reject_obsolete_headers_and_messages! {

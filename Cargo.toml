@@ -36,6 +36,7 @@ bridge-hub-kusama-emulated-chain = { path = "integration-tests/emulated/chains/p
 bridge-hub-kusama-runtime = { path = "system-parachains/bridge-hubs/bridge-hub-kusama" }
 bridge-hub-polkadot-emulated-chain = { path = "integration-tests/emulated/chains/parachains/bridges/bridge-hub-polkadot" }
 bridge-hub-polkadot-runtime = { path = "system-parachains/bridge-hubs/bridge-hub-polkadot" }
+bridge-hub-helpers = { path = "system-parachains/bridge-hubs/bridge-hub-helpers", default-features = false }
 bridge-hub-test-utils = { version = "0.8.0" }
 bridge-runtime-common = { version = "0.8.0", default-features = false }
 clap = { version = "4.5.0" }
@@ -272,6 +273,7 @@ members = [
 	"system-parachains/bridge-hubs/bridge-hub-kusama/primitives",
 	"system-parachains/bridge-hubs/bridge-hub-polkadot",
 	"system-parachains/bridge-hubs/bridge-hub-polkadot/primitives",
+	"system-parachains/bridge-hubs/bridge-hub-helpers",
 	"system-parachains/collectives/collectives-polkadot",
 	"system-parachains/collectives/collectives-polkadot/constants",
 	"system-parachains/constants",
