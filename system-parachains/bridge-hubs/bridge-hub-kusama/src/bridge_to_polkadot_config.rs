@@ -62,13 +62,6 @@ parameter_types! {
 	/// Bridge Hub.
 	pub storage DeliveryRewardInBalance: Balance = constants::currency::UNITS / 10_000;
 
-	/// Reward that is paid (by the Kusama Ping) to relayers for delivering a single
-	/// Kusama -> Polkadot bridge message.
-	///
-	/// This payment is tracked by the `pallet_bridge_relayers` pallet at the Kusama
-	/// Bridge Hub.
-	pub storage PingDeliveryRewardInBalance: Balance = constants::currency::UNITS / 10_000;
-
 	/// Registered relayer stake.
 	///
 	/// Any relayer may reserve this amount on his account and get a priority boost for his
