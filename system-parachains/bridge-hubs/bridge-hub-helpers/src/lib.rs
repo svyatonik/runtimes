@@ -399,7 +399,7 @@ where
 		.find(|(route_lane, _)| *route_lane == lane)
 		.map(|(_, provider)| provider);
 	if let Some(provider) = provider {
-		provider.is_congested()
+		!provider.is_congested()
 	} else {
 		false
 	}
