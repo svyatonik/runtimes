@@ -48,6 +48,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionValidity, TransactionValidityError},
 	DispatchResult,
 };
+use sp_std::prelude::*;
 use xcm::latest::prelude::*;
 use xcm_executor::traits::ExportXcm;
 

@@ -284,6 +284,7 @@ fn message_dispatch_routing_works() {
 
 #[test]
 fn relayed_incoming_message_works() {
+	let _ = env_logger::try_init();
 	from_parachain::relayed_incoming_message_works::<RuntimeTestsAdapter>(
 		collator_session_keys(),
 		slot_durations(),

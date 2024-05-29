@@ -2003,6 +2003,7 @@ dependencies = [
  "bp-relayers",
  "bp-runtime",
  "bridge-hub-common",
+ "bridge-hub-helpers",
  "bridge-hub-test-utils",
  "bridge-runtime-common",
  "cumulus-pallet-aura-ext",
