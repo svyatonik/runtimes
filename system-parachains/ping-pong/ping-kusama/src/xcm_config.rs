@@ -17,7 +17,7 @@ use super::{
 	AccountId, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem, PolkadotXcm,
 	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee, XcmpQueue,
 };
-use crate::{TransactionByteFee, CENTS};
+use crate::{ToPolkadotXcmRouter, TransactionByteFee, CENTS};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, Contains, Equals, Everything, Nothing},
@@ -37,9 +37,10 @@ use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses,
-	AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, DenyReserveTransferToRelayChain,
-	DenyThenTry, DescribeAllTerminal, DescribeFamily, DescribeTerminus, EnsureXcmOrigin,
-	FrameTransactionalProcessor, FungibleAdapter, HashedDescription, IsConcrete, ParentAsSuperuser,
+	AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+	DenyReserveTransferToRelayChain, DenyThenTry, DescribeAllTerminal, DescribeFamily,
+	DescribeTerminus, EnsureXcmOrigin, FrameTransactionalProcessor, FungibleAdapter,
+	GlobalConsensusParachainConvertsFor, HashedDescription, IsConcrete, ParentAsSuperuser,
 	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 	TrailingSetTopicAsId, UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
@@ -98,6 +99,9 @@ pub type LocationToAccountId = (
 	HashedDescription<AccountId, DescribeTerminus>,
 	// Foreign locations alias into accounts according to a hash of their standard description.
 	HashedDescription<AccountId, DescribeFamily<DescribeAllTerminal>>,
+	// Different global consensus parachain sovereign account.
+	// (Used for over-bridge transfers and reserve processing)
+	GlobalConsensusParachainConvertsFor<UniversalLocation, AccountId>,
 );
 
 /// Means for transacting the native currency on this chain.
@@ -162,6 +166,8 @@ pub type Barrier = TrailingSetTopicAsId<
 			AllowKnownQueryResponses<PolkadotXcm>,
 			WithComputedOrigin<
 				(
+					// Allow unpaid execution from Pong Polkdaot chain.
+					AllowUnpaidExecutionFrom<Equals<bridging::to_polkadot::PongPolkadot>>,
 					// If the message is one that immediately attempts to pay for execution, then
 					// allow it.
 					AllowTopLevelPaidExecutionFrom<Everything>,
@@ -218,7 +224,7 @@ impl xcm_executor::Config for XcmConfig {
 		XcmFeeToAccount<Self::AssetTransactor, AccountId, RelayTreasuryPalletAccount>,
 	>;
 	type MessageExporter = ();
-	type UniversalAliases = Nothing;
+	type UniversalAliases = bridging::to_polkadot::UniversalAliases;
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Everything;
 	type Aliasers = Nothing;
@@ -236,6 +242,9 @@ pub type XcmRouter = WithUniqueTopic<(
 	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm, ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
+	// Router which wraps and sends xcm to BridgeHub to be delivered to the Polkadot
+	// GlobalConsensus
+	ToPolkadotXcmRouter,
 )>;
 
 impl pallet_xcm::Config for Runtime {
@@ -273,6 +282,111 @@ impl pallet_xcm::Config for Runtime {
 impl cumulus_pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+}
+
+/// All configuration related to bridging
+pub mod bridging {
+	use super::*;
+	use sp_std::collections::btree_set::BTreeSet;
+	use xcm_builder::NetworkExportTableItem;
+
+	parameter_types! {
+		/// Base price of every Kusama -> Polkadot message. Can be adjusted via
+		/// governance `set_storage` call.
+		pub storage XcmBridgeHubRouterBaseFee: crate::Balance = 100; // TODO
+		/// Price of every byte of the Kusama -> Polkadot message. Can be adjusted via
+		/// governance `set_storage` call.
+		pub storage XcmBridgeHubRouterByteFee: crate::Balance = 100; // TODO
+
+		pub const KsmLocation: Location = Location::parent();
+
+		pub SiblingBridgeHubParaId: u32 = bp_bridge_hub_kusama::BRIDGE_HUB_KUSAMA_PARACHAIN_ID;
+		pub SiblingBridgeHub: Location = Location::new(1, Parachain(SiblingBridgeHubParaId::get()));
+		/// Router expects payment with this `AssetId`.
+		/// (`AssetId` has to be aligned with `BridgeTable`)
+		pub XcmBridgeHubRouterFeeAssetId: AssetId = KsmLocation::get().into();
+
+		pub BridgeTable: sp_std::vec::Vec<NetworkExportTableItem> =
+			sp_std::vec::Vec::new().into_iter()
+			.chain(to_polkadot::BridgeTable::get())
+			.collect();
+	}
+
+	pub type NetworkExportTable = xcm_builder::NetworkExportTable<BridgeTable>;
+
+	pub mod to_polkadot {
+		use super::*;
+
+		parameter_types! {
+			pub SiblingBridgeHubWithBridgeHubPolkadotInstance: Location = Location::new(
+				1,
+				[
+					Parachain(SiblingBridgeHubParaId::get()),
+					PalletInstance(bp_bridge_hub_kusama::WITH_BRIDGE_KUSAMA_TO_POLKADOT_MESSAGES_PALLET_INDEX),
+				]
+			);
+
+			pub const PolkadotNetwork: NetworkId = NetworkId::Polkadot;
+			pub PongPolkadot: Location = Location::new(
+				2,
+				[
+					GlobalConsensus(PolkadotNetwork::get()),
+					Parachain(5_000),
+				],
+			);
+
+			/// Set up exporters configuration.
+			/// `Option<Asset>` represents static "base fee" which is used for total delivery fee calculation.
+			pub BridgeTable: sp_std::vec::Vec<NetworkExportTableItem> = sp_std::vec![
+				NetworkExportTableItem::new(
+					PolkadotNetwork::get(),
+					Some(sp_std::vec![
+						PongPolkadot::get().interior.split_global().expect("invalid configuration for PingKusama").1,
+					]),
+					SiblingBridgeHub::get(),
+					// base delivery fee to local `BridgeHub`
+					Some((
+						XcmBridgeHubRouterFeeAssetId::get(),
+						XcmBridgeHubRouterBaseFee::get(),
+					).into())
+				)
+			];
+
+			/// Universal aliases
+			pub UniversalAliases: BTreeSet<(Location, Junction)> = BTreeSet::from_iter(
+				sp_std::vec![
+					(SiblingBridgeHubWithBridgeHubPolkadotInstance::get(), GlobalConsensus(PolkadotNetwork::get()))
+				]
+			);
+		}
+
+		impl Contains<(Location, Junction)> for UniversalAliases {
+			fn contains(alias: &(Location, Junction)) -> bool {
+				UniversalAliases::get().contains(alias)
+			}
+		}
+	}
+
+	/// Benchmarks helper for bridging configuration.
+	#[cfg(feature = "runtime-benchmarks")]
+	pub struct BridgingBenchmarksHelper;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	impl BridgingBenchmarksHelper {
+		pub fn prepare_universal_alias() -> Option<(Location, Junction)> {
+			let alias = to_polkadot::UniversalAliases::get().into_iter().find_map(
+				|(location, junction)| {
+					match to_polkadot::SiblingBridgeHubWithBridgeHubPolkadotInstance::get()
+						.eq(&location)
+					{
+						true => Some((location, junction)),
+						false => None,
+					}
+				},
+			);
+			Some(alias.expect("we expect here BridgeHubKusama to Polkadot mapping at least"))
+		}
+	}
 }
 
 #[test]

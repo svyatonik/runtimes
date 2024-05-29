@@ -18,6 +18,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+mod pong;
 mod weights;
 pub mod xcm_config;
 
@@ -364,6 +365,43 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = weights::pallet_collator_selection::WeightInfo<Runtime>;
 }
 
+/// XCM router instance to BridgeHub with bridging capabilities for `Kusama` global
+/// consensus with dynamic fees and back-pressure.
+pub type ToKusamaXcmRouterInstance = pallet_xcm_bridge_hub_router::Instance1;
+impl pallet_xcm_bridge_hub_router::Config<ToKusamaXcmRouterInstance> for Runtime {
+	type WeightInfo = ();
+
+	type UniversalLocation = xcm_config::UniversalLocation;
+	type BridgedNetworkId = xcm_config::bridging::to_kusama::KusamaNetwork;
+	type Bridges = xcm_config::bridging::NetworkExportTable;
+	type DestinationVersion = PolkadotXcm;
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type BridgeHubOrigin =
+		EnsureXcm<frame_support::traits::Equals<xcm_config::bridging::SiblingBridgeHub>>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BridgeHubOrigin = frame_support::traits::EitherOfDiverse<
+		// for running benchmarks
+		EnsureRoot<AccountId>,
+		// for running tests with `--feature runtime-benchmarks`
+		EnsureXcm<Equals<xcm_config::bridging::SiblingBridgeHub>>,
+	>;
+
+	type ToBridgeHubSender = XcmpQueue;
+	type WithBridgeHubChannel =
+		cumulus_pallet_xcmp_queue::bridging::InAndOutXcmpChannelStatusProvider<
+			xcm_config::bridging::SiblingBridgeHubParaId,
+			Runtime,
+		>;
+
+	type ByteFee = xcm_config::bridging::XcmBridgeHubRouterByteFee;
+	type FeeAsset = xcm_config::bridging::XcmBridgeHubRouterFeeAssetId;
+}
+
+impl pong::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime
@@ -390,6 +428,12 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm = 31,
 		CumulusXcm: cumulus_pallet_xcm = 32,
 		MessageQueue: pallet_message_queue = 34,
+
+		// Bridge pallets
+		ToKusamaXcmRouter: pallet_xcm_bridge_hub_router::<Instance1> = 50,
+
+		// Bridge test pallets
+		Pong: pong = 100,
 	}
 );
 

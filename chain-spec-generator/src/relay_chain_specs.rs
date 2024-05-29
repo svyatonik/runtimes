@@ -241,7 +241,7 @@ pub fn polkadot_testnet_genesis(
 			"config": default_parachains_host_configuration(),
 		},
 		"sudo": {
-			"key": Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
+			"key": Some(_root_key),
 		},
 	})
 }
@@ -307,7 +307,7 @@ pub fn kusama_testnet_genesis(
 			"config": default_parachains_host_configuration(),
 		},
 		"sudo": {
-			"key": Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
+			"key": Some(_root_key),
 		},
 	})
 }
