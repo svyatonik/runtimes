@@ -450,7 +450,7 @@ pub type RefundPingPongMessages = bridge_hub_helpers::RefundSignedExtensionAdapt
 		>,
 		ActualFeeRefund<Runtime>,
 		PriorityBoostPerMessage,
-		StrRefundBridgeHubPolkadotMessages,
+		StrRefundPingPongMessages,
 	>,
 	ActiveRoutes,
 >;
