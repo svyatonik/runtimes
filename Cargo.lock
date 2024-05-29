@@ -1767,11 +1767,22 @@ name = "bridge-hub-helpers"
 version = "1.0.0"
 dependencies = [
  "bp-messages",
+ "bp-runtime",
+ "bp-xcm-bridge-hub-router",
  "bridge-runtime-common",
+ "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
  "impl-trait-for-tuples",
+ "pallet-bridge-grandpa",
  "pallet-bridge-messages",
+ "pallet-bridge-parachains",
  "pallet-xcm-bridge-hub",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 32.0.0",
+ "sp-std",
  "staging-xcm",
  "staging-xcm-executor",
 ]
