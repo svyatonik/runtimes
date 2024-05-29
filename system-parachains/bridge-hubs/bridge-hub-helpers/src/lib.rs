@@ -31,11 +31,18 @@ use sp_runtime::traits::{Get, PhantomData};
 use xcm::latest::prelude::*;
 use xcm_executor::traits::ExportXcm;
 
+/// A `XcmBlobHauler` trait that may be 'tuplified' to support multiple lanes.
 pub trait XcmBlobHaulerItem {
+	/// Reference to the original `XcmBlobHauler` implementation.
 	type Hauler;
+	/// A linked route for this [`Self::XcmBlobHauler`].
 	type SenderAndLane;
 
+	/// Check if `lane` matches the route and call `on_message_enqueued` to maybe
+	/// trigger the congestion mechanism.
 	fn try_on_message_enqueued(lane: LaneId, enqueued_messages: MessageNonce);
+	/// Check if `lane` matches the route and call `on_messages_delivered` to maybe
+	/// trigger the uncongestion mechanism.
 	fn try_on_messages_delivered(lane: LaneId, enqueued_messages: MessageNonce);
 }
 
@@ -57,6 +64,8 @@ impl XcmBlobHaulerItem for Tuple {
 	}
 }
 
+/// A simple adapter around `XcmBlobHauler` and `SenderAndLane` that implements
+/// the `XcmBlobHaulerItem` trait.
 pub struct XcmBlobHaulerItemAdapter<H, SL>(PhantomData<(H, SL)>);
 impl<H: XcmBlobHauler, SL: Get<SenderAndLane>> XcmBlobHaulerItem
 	for XcmBlobHaulerItemAdapter<H, SL>
