@@ -71,3 +71,21 @@ ws_port = 8944
 args = [
 	"-lparachain=trace,runtime::bridge-hub=trace,runtime::bridge=trace,runtime::bridge-dispatch=trace,bridge=trace,runtime::bridge-messages=trace,xcm=trace",
 ]
+
+[[parachains]]
+id = 5000
+#chain = "pong-polkadot-local"
+chain_spec = "{{ENV_PATH}}/../../pong-polkadot-local-chain-spec.json"
+cumulus_based = true
+
+[[parachains.collators]]
+name = "pong-polkadot-collator-1"
+rpc_port = 9912
+ws_port = 9913
+command = "{{POLKADOT_PARACHAIN_BINARY}}"
+args = ["-lparachain=debug,xcm=trace,runtime::bridge-transfer=trace"]
+
+[[parachains.collators]]
+name = "pong-polkadot-collator-2"
+command = "{{POLKADOT_PARACHAIN_BINARY}}"
+args = ["-lparachain=debug,xcm=trace,runtime::bridge-transfer=trace"]

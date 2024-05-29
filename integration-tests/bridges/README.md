@@ -3,8 +3,6 @@
 This folder contains zombienet based integration test for both onchain and offchain bridges code.
 The tests are designed to be run manually.
 
-**USE polkadot-sdk polkadot-v1.7.0**
-
 To start a test, you need to:
 
 - download latest [zombienet release](https://github.com/paritytech/zombienet/releases) to 

@@ -73,3 +73,21 @@ ws_port = 8946
 args = [
 	"-lparachain=trace,runtime::mmr=info,substrate=info,runtime=info,runtime::bridge-hub=trace,runtime::bridge=trace,runtime::bridge-dispatch=trace,bridge=trace,runtime::bridge-messages=trace,xcm=trace",
 ]
+
+[[parachains]]
+id = 5000
+#chain = "ping-kusama-local"
+chain_spec = "{{ENV_PATH}}/../../ping-kusama-local-chain-spec.json"
+cumulus_based = true
+
+[[parachains.collators]]
+name = "ping-kusama-collator-1"
+rpc_port = 9051
+ws_port = 9050
+command = "{{POLKADOT_PARACHAIN_BINARY}}"
+args = ["-lparachain=debug,xcm=trace,runtime::bridge-transfer=trace"]
+
+[[parachains.collators]]
+name = "ping-kusama-collator-2"
+command = "{{POLKADOT_PARACHAIN_BINARY}}"
+args = ["-lparachain=debug,xcm=trace,runtime::bridge-transfer=trace"]
