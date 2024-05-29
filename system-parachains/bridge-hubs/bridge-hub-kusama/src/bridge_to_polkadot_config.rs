@@ -20,7 +20,7 @@ use crate::{
 	weights,
 	xcm_config::{UniversalLocation, XcmRouter},
 	AccountId, Balance, Balances, BlockNumber, BridgePolkadotMessages, PolkadotXcm, Runtime,
-	RuntimeEvent, RuntimeOrigin, XcmOverBridgeHubPolkadot,
+	RuntimeEvent, RuntimeOrigin,
 };
 use bp_messages::LaneId;
 use bp_parachains::SingleParaStoredHeaderDataBuilder;
@@ -112,6 +112,14 @@ parameter_types! {
 		interior: [
 			GlobalConsensus(PolkadotGlobalConsensusNetwork::get()),
 			Parachain(<bp_bridge_hub_polkadot::BridgeHubPolkadot as bp_runtime::Parachain>::PARACHAIN_ID)
+		].into()
+	};
+	/// Location of the bridged Polkadot Bridge Hub parachain.
+	pub PongPolkadotLocation: Location = Location {
+		parents: 2,
+		interior: [
+			GlobalConsensus(PolkadotGlobalConsensusNetwork::get()),
+			Parachain(PongPolkadotParaId::get().into())
 		].into()
 	};
 

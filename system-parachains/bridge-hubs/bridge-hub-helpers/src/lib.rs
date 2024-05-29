@@ -102,12 +102,19 @@ impl<H: XcmBlobHaulerItem> OnMessagesDelivered for XcmBlobHaulerAdapter<H> {
 	}
 }
 
+/// `ExportXcm` implementation with proper support for multiple lanes.
+/// Our regular implementation for the `pallet_xcm_bridge_hub::Pallet` ignores
+/// the fact that 'congested' and 'uncongested' messages may be different for
+/// different sibling parachains, so we are using this trick to support multiple
+/// lanes.
+///
+/// See `to_bridge_hub_polkadot_haul_blob_exporter_works_as_a_junction` test for more details.
+pub struct OverBridgeXcmExporter<R, I, H>(PhantomData<(R, I, H)>);
+
 type MessagesPallet<T, I> = pallet_bridge_messages::Pallet<
 	T,
 	<T as pallet_xcm_bridge_hub::Config<I>>::BridgeMessagesPalletInstance,
 >;
-
-pub struct OverBridgeXcmExporter<R, I, H>(PhantomData<(R, I, H)>);
 
 impl<R, I, H> ExportXcm for OverBridgeXcmExporter<R, I, H>
 where
