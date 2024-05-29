@@ -33,8 +33,8 @@ use bridge_runtime_common::{
 		MessageBridge, ThisChainWithMessages, UnderlyingChainProvider,
 	},
 	messages_xcm_extension::{
-		SenderAndLane, XcmAsPlainPayload, XcmBlobHauler,
-		XcmBlobMessageDispatch, XcmVersionOfDestAndRemoteBridge,
+		SenderAndLane, XcmAsPlainPayload, XcmBlobHauler, XcmBlobMessageDispatch,
+		XcmVersionOfDestAndRemoteBridge,
 	},
 	refund_relayer_extension::{
 		ActualFeeRefund, RefundBridgedParachainMessages, RefundSignedExtensionAdapter,
@@ -78,9 +78,9 @@ parameter_types! {
 	pub storage RequiredStakeForStakeAndSlash: Balance = 100 * constants::currency::UNITS;
 
 	/// TODO.
-	pub ToPingKusamaCongestedMessage: Option<Xcm<()>> = None;
+	pub ToPingKusamaCongestedMessage: Option<Xcm<()>> = Some(vec![].into());
 	/// TODO.
-	pub ToPingKusamaUncongestedMessage: Option<Xcm<()>> = None;
+	pub ToPingKusamaUncongestedMessage: Option<Xcm<()>> = Some(vec![].into());
 }
 
 // Parameters, used by both XCM and bridge code.
@@ -262,7 +262,7 @@ impl pallet_bridge_messages::Config<WithBridgeHubPolkadotMessagesInstance> for R
 		FromPolkadotMessageBlobDispatcher,
 		Self::WeightInfo,
 		// **WARNING**: `XcmBlobMessageDispatch::is_active` has no `lane_id` argument, so we
-		// can not distinguish between 
+		// can not distinguish between
 		cumulus_pallet_xcmp_queue::bridging::OutXcmpChannelStatusProvider<
 			AssetHubKusamaParaId,
 			Runtime,
@@ -290,8 +290,14 @@ pub type ToBridgeHubPolkadotHaulBlobExporter = bridge_hub_helpers::OverBridgeXcm
 	Runtime,
 	XcmOverBridgeHubPolkadotInstance,
 	(
-		bridge_hub_helpers::XcmBlobHaulerItemAdapter<ToBridgeHubPolkadotXcmBlobHauler, FromAssetHubKusamaToAssetHubPolkadotRoute>,
-		bridge_hub_helpers::XcmBlobHaulerItemAdapter<ToBridgeHubPolkadotPingPongXcmBlobHauler, FromPingKusamaToPongPolkadotRoute>,
+		bridge_hub_helpers::XcmBlobHaulerItemAdapter<
+			ToBridgeHubPolkadotXcmBlobHauler,
+			FromAssetHubKusamaToAssetHubPolkadotRoute,
+		>,
+		bridge_hub_helpers::XcmBlobHaulerItemAdapter<
+			ToBridgeHubPolkadotPingPongXcmBlobHauler,
+			FromPingKusamaToPongPolkadotRoute,
+		>,
 	),
 >;
 
@@ -314,8 +320,14 @@ impl XcmBlobHauler for ToBridgeHubPolkadotPingPongXcmBlobHauler {
 }
 
 pub type AllXcmBlobHaulers = bridge_hub_helpers::XcmBlobHaulerAdapter<(
-	bridge_hub_helpers::XcmBlobHaulerItemAdapter<ToBridgeHubPolkadotXcmBlobHauler, FromAssetHubKusamaToAssetHubPolkadotRoute>,
-	bridge_hub_helpers::XcmBlobHaulerItemAdapter<ToBridgeHubPolkadotPingPongXcmBlobHauler, FromPingKusamaToPongPolkadotRoute>,
+	bridge_hub_helpers::XcmBlobHaulerItemAdapter<
+		ToBridgeHubPolkadotXcmBlobHauler,
+		FromAssetHubKusamaToAssetHubPolkadotRoute,
+	>,
+	bridge_hub_helpers::XcmBlobHaulerItemAdapter<
+		ToBridgeHubPolkadotPingPongXcmBlobHauler,
+		FromPingKusamaToPongPolkadotRoute,
+	>,
 )>;
 
 /// Add support for the export and dispatch of XCM programs.
@@ -336,7 +348,7 @@ impl pallet_xcm_bridge_hub::Config<XcmOverBridgeHubPolkadotInstance> for Runtime
 }
 
 /// On messages delivered callback.
-type OnMessagesDeliveredFromPolkadot = AllXcmBlobHaulers;
+pub type OnMessagesDeliveredFromPolkadot = AllXcmBlobHaulers;
 
 /// Messaging Bridge configuration for BridgeHubKusama -> BridgeHubPolkadot
 pub struct WithBridgeHubPolkadotMessageBridge;

@@ -14,14 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
+use bp_messages::source_chain::OnMessagesDelivered;
 use bp_polkadot_core::Signature;
 use bridge_hub_kusama_runtime::{
 	bridge_to_polkadot_config::{
-		AssetHubPolkadotParaId, BridgeGrandpaPolkadotInstance, BridgeHubPolkadotChainId,
-		BridgeHubPolkadotLocation, BridgeParachainPolkadotInstance, DeliveryRewardInBalance,
-		PolkadotGlobalConsensusNetwork, RefundBridgeHubPolkadotMessages,
-		RequiredStakeForStakeAndSlash, WithBridgeHubPolkadotMessageBridge,
-		WithBridgeHubPolkadotMessagesInstance, XCM_LANE_FOR_ASSET_HUB_KUSAMA_TO_ASSET_HUB_POLKADOT,
+		AssetHubKusamaParaId, AssetHubPolkadotParaId, BridgeGrandpaPolkadotInstance,
+		BridgeHubPolkadotChainId, BridgeHubPolkadotLocation, BridgeParachainPolkadotInstance,
+		DeliveryRewardInBalance, FromAssetHubKusamaToAssetHubPolkadotRoute,
+		FromPingKusamaToPongPolkadotRoute, OnMessagesDeliveredFromPolkadot, PingKusamaParaId,
+		PolkadotGlobalConsensusNetwork, RefundBridgeHubPolkadotMessages, RefundPingPongMessages,
+		RequiredStakeForStakeAndSlash, ToBridgeHubPolkadotPingPongXcmBlobHauler,
+		ToBridgeHubPolkadotXcmBlobHauler, WithBridgeHubPolkadotMessageBridge,
+		WithBridgeHubPolkadotMessagesInstance, PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+		XCM_LANE_FOR_ASSET_HUB_KUSAMA_TO_ASSET_HUB_POLKADOT,
 	},
 	xcm_config::{
 		KsmRelayLocation, LocationToAccountId, RelayNetwork, RelayTreasuryLocation,
@@ -32,8 +37,10 @@ use bridge_hub_kusama_runtime::{
 	SignedExtra, TransactionPayment, UncheckedExtrinsic, SLOT_DURATION,
 };
 use bridge_hub_test_utils::{test_cases::from_parachain, SlotDurations};
+use bridge_runtime_common::messages_xcm_extension::LocalXcmQueueManager;
 use codec::{Decode, Encode};
 use frame_support::{dispatch::GetDispatchInfo, parameter_types, traits::ConstU8};
+use pallet_bridge_messages::OutboundLanesCongestedSignals;
 use parachains_common::{AccountId, AuraId, Balance};
 use sp_consensus_aura::SlotDuration;
 use sp_keyring::AccountKeyring::Alice;
@@ -81,7 +88,8 @@ fn construct_extrinsic(
 		frame_system::CheckWeight::<Runtime>::new(),
 		pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 		BridgeRejectObsoleteHeadersAndMessages,
-		(RefundBridgeHubPolkadotMessages::default()),
+		RefundBridgeHubPolkadotMessages::default(),
+		RefundPingPongMessages::default(),
 	);
 	let payload = SignedPayload::new(call.clone(), extra.clone()).unwrap();
 	let signature = payload.using_encoded(|e| sender.sign(e));
@@ -422,4 +430,59 @@ pub fn diff_as_percent(left: u128, right: u128) -> f64 {
 	let left = left as f64;
 	let right = right as f64;
 	((left - right).abs() / left) * 100f64 * (if left >= right { -1 } else { 1 }) as f64
+}
+
+#[test]
+fn on_messages_delivered_from_polkadot_works_as_a_junction() {
+	let _ = env_logger::try_init();
+	bridge_hub_test_utils::test_cases::run_test::<Runtime, _>(
+		collator_session_keys(),
+		bp_bridge_hub_kusama::BRIDGE_HUB_KUSAMA_PARACHAIN_ID,
+		vec![],
+		|| {
+			// when lane with bridged AH is congested
+			ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(
+				AssetHubKusamaParaId::get().into(),
+			);
+			LocalXcmQueueManager::<ToBridgeHubPolkadotXcmBlobHauler>::on_bridge_message_enqueued(
+				&FromAssetHubKusamaToAssetHubPolkadotRoute::get(),
+				1_000_000,
+			);
+			assert!(OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
+				&XCM_LANE_FOR_ASSET_HUB_KUSAMA_TO_ASSET_HUB_POLKADOT,
+			));
+			// AND when messages are delivered to bridged AH
+			// AND we get a notification that the lane became uncongested
+			// => uncongested message is sent to the sibling AH
+			OnMessagesDeliveredFromPolkadot::on_messages_delivered(
+				XCM_LANE_FOR_ASSET_HUB_KUSAMA_TO_ASSET_HUB_POLKADOT,
+				0,
+			);
+			assert!(!OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
+				&XCM_LANE_FOR_ASSET_HUB_KUSAMA_TO_ASSET_HUB_POLKADOT,
+			));
+
+			// when lane with bridged Pong is congested
+			ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(
+				PingKusamaParaId::get().into(),
+			);
+			LocalXcmQueueManager::<ToBridgeHubPolkadotPingPongXcmBlobHauler>::on_bridge_message_enqueued(
+				&FromPingKusamaToPongPolkadotRoute::get(),
+				1_000_000,
+			);
+			assert!(OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
+				&PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+			));
+			// AND when messages are delivered to bridged Pong
+			// AND we get a notification that the lane became uncongested
+			// => uncongested message is sent to the sibling Ping
+			OnMessagesDeliveredFromPolkadot::on_messages_delivered(
+				PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+				0,
+			);
+			assert!(!OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
+				&PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+			));
+		},
+	);
 }

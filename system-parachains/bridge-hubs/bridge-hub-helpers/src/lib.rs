@@ -20,8 +20,13 @@
 //! by the [bridges v2](https://github.com/paritytech/polkadot-sdk/pull/4427) in
 //! the future.
 
-use bp_messages::{source_chain::{MessagesBridge, OnMessagesDelivered}, LaneId, MessageNonce};
-use bridge_runtime_common::messages_xcm_extension::{LocalXcmQueueManager, SenderAndLane, XcmBlobHauler};
+use bp_messages::{
+	source_chain::{MessagesBridge, OnMessagesDelivered},
+	LaneId, MessageNonce,
+};
+use bridge_runtime_common::messages_xcm_extension::{
+	LocalXcmQueueManager, SenderAndLane, XcmBlobHauler,
+};
 use sp_runtime::traits::{Get, PhantomData};
 use xcm::latest::prelude::*;
 use xcm_executor::traits::ExportXcm;
@@ -53,7 +58,9 @@ impl XcmBlobHaulerItem for Tuple {
 }
 
 pub struct XcmBlobHaulerItemAdapter<H, SL>(PhantomData<(H, SL)>);
-impl<H: XcmBlobHauler, SL: Get<SenderAndLane>> XcmBlobHaulerItem for XcmBlobHaulerItemAdapter<H, SL> {
+impl<H: XcmBlobHauler, SL: Get<SenderAndLane>> XcmBlobHaulerItem
+	for XcmBlobHaulerItemAdapter<H, SL>
+{
 	type Hauler = H;
 	type SenderAndLane = SL;
 
@@ -80,10 +87,13 @@ impl<H: XcmBlobHauler, SL: Get<SenderAndLane>> XcmBlobHaulerItem for XcmBlobHaul
 	}
 }
 
-/// XCM bridge adapter which connects [`XcmBlobHauler`] with [`pallet_bridge_messages`] and
-/// makes sure that XCM blob is sent to the outbound lane to be relayed.
+/// `OnMessagesDelivered` implementation with proper support for multiple lanes.
+/// Our regular `XcmBlobHaulerAdapter` from `bridge-runtime-common` crate ignores
+/// the fact that 'congested' and 'uncongested' messages may be different for
+/// different sibling parachains, so we are using this trick to support multiple
+/// lanes.
 ///
-/// It needs to be used at the source bridge hub.
+/// See `on_messages_delivered_from_polkadot_works_as_a_junction` test for more details.
 pub struct XcmBlobHaulerAdapter<H>(PhantomData<H>);
 
 impl<H: XcmBlobHaulerItem> OnMessagesDelivered for XcmBlobHaulerAdapter<H> {
@@ -92,7 +102,10 @@ impl<H: XcmBlobHaulerItem> OnMessagesDelivered for XcmBlobHaulerAdapter<H> {
 	}
 }
 
-type MessagesPallet<T, I> = pallet_bridge_messages::Pallet<T, <T as pallet_xcm_bridge_hub::Config<I>>::BridgeMessagesPalletInstance>;
+type MessagesPallet<T, I> = pallet_bridge_messages::Pallet<
+	T,
+	<T as pallet_xcm_bridge_hub::Config<I>>::BridgeMessagesPalletInstance,
+>;
 
 pub struct OverBridgeXcmExporter<R, I, H>(PhantomData<(R, I, H)>);
 
@@ -104,7 +117,7 @@ where
 	pallet_xcm_bridge_hub::Pallet<R, I>: ExportXcm<
 		Ticket = (
 			SenderAndLane,
-			<MessagesPallet::<R, I> as MessagesBridge<R::OutboundPayload>>::SendMessageArgs,
+			<MessagesPallet<R, I> as MessagesBridge<R::OutboundPayload>>::SendMessageArgs,
 			XcmHash,
 		),
 	>,
@@ -118,21 +131,27 @@ where
 		destination: &mut Option<InteriorLocation>,
 		message: &mut Option<Xcm<()>>,
 	) -> Result<(Self::Ticket, Assets), SendError> {
-		pallet_xcm_bridge_hub::Pallet::<R, I>::validate(network, channel, universal_source, destination, message)
+		pallet_xcm_bridge_hub::Pallet::<R, I>::validate(
+			network,
+			channel,
+			universal_source,
+			destination,
+			message,
+		)
 	}
 
 	fn deliver((sender_and_lane, bridge_message, id): Self::Ticket) -> Result<XcmHash, SendError> {
 		let lane_id = sender_and_lane.lane;
 		let artifacts = MessagesPallet::<R, I>::send_message(bridge_message);
-/*
-		log::info!(
-			target: pallext_xcm_bridge_hub::LOG_TARGET,
-			"XCM message {:?} has been enqueued at bridge {:?} with nonce {}",
-			id,
-			lane_id,
-			artifacts.nonce,
-		);
-*/
+		/*
+				log::info!(
+					target: pallext_xcm_bridge_hub::LOG_TARGET,
+					"XCM message {:?} has been enqueued at bridge {:?} with nonce {}",
+					id,
+					lane_id,
+					artifacts.nonce,
+				);
+		*/
 		// notify XCM queue manager about updated lane state
 		H::try_on_message_enqueued(lane_id, artifacts.enqueued_messages);
 
