@@ -15,14 +15,18 @@
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
 use bp_bridge_hub_kusama::Perbill;
+use bp_messages::{source_chain::OnMessagesDelivered, OutboundLaneData};
 use bp_polkadot_core::Signature;
 use bridge_hub_polkadot_runtime::{
 	bridge_to_kusama_config::{
 		AssetHubKusamaParaId, BridgeGrandpaKusamaInstance, BridgeHubKusamaChainId,
 		BridgeHubKusamaLocation, BridgeParachainKusamaInstance, DeliveryRewardInBalance,
-		KusamaGlobalConsensusNetwork, RefundBridgeHubKusamaMessages, RequiredStakeForStakeAndSlash,
-		WithBridgeHubKusamaMessageBridge, WithBridgeHubKusamaMessagesInstance,
-		XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
+		KusamaGlobalConsensusNetwork, RefundBridgeHubKusamaMessages,
+		RequiredStakeForStakeAndSlash, WithBridgeHubKusamaMessageBridge,
+		WithBridgeHubKusamaMessagesInstance, XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
+		AssetHubPolkadotParaId, FromAssetHubPolkadotToAssetHubKusamaRoute,
+		ToBridgeHubKusamaXcmBlobHauler, ToBridgeHubKusamaHaulBlobExporter,
+		OnMessagesDeliveredFromKusama,
 	},
 	xcm_config::{
 		DotRelayLocation, LocationToAccountId, RelayNetwork, RelayTreasuryLocation,
@@ -33,8 +37,10 @@ use bridge_hub_polkadot_runtime::{
 	SignedExtra, TransactionPayment, UncheckedExtrinsic, SLOT_DURATION,
 };
 use bridge_hub_test_utils::{test_cases::from_parachain, SlotDurations};
+use bridge_runtime_common::messages_xcm_extension::LocalXcmQueueManager;
 use codec::{Decode, Encode};
 use frame_support::{dispatch::GetDispatchInfo, parameter_types, traits::ConstU8};
+use pallet_bridge_messages::{OutboundLanes, OutboundLanesCongestedSignals};
 use parachains_common::{AccountId, AuraId, Balance};
 use sp_consensus_aura::SlotDuration;
 use sp_keyring::AccountKeyring::Alice;
@@ -46,7 +52,7 @@ use system_parachains_constants::polkadot::{
 	consensus::RELAY_CHAIN_SLOT_DURATION_MILLIS, fee::WeightToFee,
 };
 use xcm::latest::prelude::*;
-use xcm_executor::traits::ConvertLocation;
+use xcm_executor::traits::{ConvertLocation, export_xcm};
 
 // Para id of sibling chain used in tests.
 pub const SIBLING_PARACHAIN_ID: u32 = 1000;
@@ -82,7 +88,7 @@ fn construct_extrinsic(
 		frame_system::CheckWeight::<Runtime>::new(),
 		pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 		BridgeRejectObsoleteHeadersAndMessages,
-		(RefundBridgeHubKusamaMessages::default()),
+		RefundBridgeHubKusamaMessages::default(),
 	);
 	let payload = SignedPayload::new(call.clone(), extra.clone()).unwrap();
 	let signature = payload.using_encoded(|e| sender.sign(e));
@@ -421,4 +427,84 @@ pub fn diff_as_percent(left: u128, right: u128) -> f64 {
 	let left = left as f64;
 	let right = right as f64;
 	((left - right).abs() / left) * 100f64 * (if left >= right { -1 } else { 1 }) as f64
+}
+
+#[test]
+fn on_messages_delivered_from_kusama_works_as_a_junction() {
+	bridge_hub_test_utils::test_cases::run_test::<Runtime, _>(
+		collator_session_keys(),
+		bp_bridge_hub_polkadot::BRIDGE_HUB_POLKADOT_PARACHAIN_ID,
+		vec![],
+		|| {
+			// when lane with bridged AH is congested
+			ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(
+				AssetHubPolkadotParaId::get().into(),
+			);
+			LocalXcmQueueManager::<ToBridgeHubKusamaXcmBlobHauler>::on_bridge_message_enqueued(
+				&FromAssetHubPolkadotToAssetHubKusamaRoute::get(),
+				1_000_000,
+			);
+			assert!(OutboundLanesCongestedSignals::<Runtime, WithBridgeHubKusamaMessagesInstance>::contains_key(
+				&XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
+			));
+			// AND when messages are delivered to bridged AH
+			// AND we get a notification that the lane became uncongested
+			// => uncongested message is sent to the sibling AH
+			OnMessagesDeliveredFromKusama::on_messages_delivered(
+				XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
+				0,
+			);
+			assert!(!OutboundLanesCongestedSignals::<Runtime, WithBridgeHubKusamaMessagesInstance>::contains_key(
+				&XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
+			));
+		},
+	);
+}
+
+#[test]
+fn to_bridge_hub_kusama_haul_blob_exporter_works_as_a_junction() {
+	bridge_hub_test_utils::test_cases::run_test::<Runtime, _>(
+		collator_session_keys(),
+		bp_bridge_hub_polkadot::BRIDGE_HUB_POLKADOT_PARACHAIN_ID,
+		vec![],
+		|| {
+			// when lane with bridged AH already has many messages
+			PolkadotXcm::force_xcm_version(
+				RuntimeOrigin::root(),
+				Box::new(BridgeHubKusamaLocation::get()),
+				XCM_VERSION,
+			)
+			.unwrap();
+			OutboundLanes::<Runtime, WithBridgeHubKusamaMessagesInstance>::insert(
+				XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
+				OutboundLaneData {
+					oldest_unpruned_nonce: 0,
+					latest_received_nonce: 0,
+					latest_generated_nonce: 1_000_000,
+				},
+			);
+			ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(
+				AssetHubPolkadotParaId::get().into(),
+			);
+			assert!(!OutboundLanesCongestedSignals::<Runtime, WithBridgeHubKusamaMessagesInstance>::contains_key(
+				&XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
+			));
+			// AND when next messages to bridged AH is queued
+			// => congested message is sent to the sibling AH
+			export_xcm::<ToBridgeHubKusamaHaulBlobExporter>(
+				Kusama,
+				0,
+				Junctions::from([
+					GlobalConsensus(Polkadot),
+					Parachain(AssetHubPolkadotParaId::get().into()),
+				]),
+				Junctions::from([Parachain(AssetHubKusamaParaId::get().into())]),
+				vec![].into(),
+			)
+			.unwrap();
+			assert!(OutboundLanesCongestedSignals::<Runtime, WithBridgeHubKusamaMessagesInstance>::contains_key(
+				&XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
+			));
+		},
+	);
 }
