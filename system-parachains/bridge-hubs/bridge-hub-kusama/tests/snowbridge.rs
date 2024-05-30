@@ -19,7 +19,7 @@
 use bp_polkadot_core::Signature;
 use bridge_hub_kusama_runtime::{
 	bridge_to_ethereum_config::{EthereumGatewayAddress, EthereumNetwork},
-	bridge_to_polkadot_config::RefundBridgeHubPolkadotMessages,
+	bridge_to_polkadot_config::{RefundBridgeHubPolkadotMessages, RefundPingPongMessages},
 	xcm_config::{XcmConfig, XcmFeeManagerFromComponentsBridgeHub},
 	BridgeRejectObsoleteHeadersAndMessages, Executive, MessageQueueServiceWeight, Runtime,
 	RuntimeCall, RuntimeEvent, SessionKeys, SignedExtra, UncheckedExtrinsic,
@@ -327,7 +327,8 @@ fn construct_extrinsic(
 		frame_system::CheckWeight::<Runtime>::new(),
 		pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 		BridgeRejectObsoleteHeadersAndMessages,
-		(RefundBridgeHubPolkadotMessages::default()),
+		RefundBridgeHubPolkadotMessages::default(),
+		RefundPingPongMessages::default(),
 	);
 	let payload = SignedPayload::new(call.clone(), extra.clone()).unwrap();
 	let signature = payload.using_encoded(|e| sender.sign(e));

@@ -119,6 +119,7 @@ pub type SignedExtra = (
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 	BridgeRejectObsoleteHeadersAndMessages,
 	bridge_to_kusama_config::RefundBridgeHubKusamaMessages,
+	bridge_to_kusama_config::RefundPingPongMessages,
 );
 
 bridge_runtime_common::generate_bridge_reject_obsolete_headers_and_messages! {

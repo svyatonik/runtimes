@@ -21,12 +21,12 @@ use bridge_hub_kusama_runtime::{
 		AssetHubKusamaParaId, AssetHubPolkadotParaId, BridgeGrandpaPolkadotInstance,
 		BridgeHubPolkadotChainId, BridgeHubPolkadotLocation, BridgeParachainPolkadotInstance,
 		DeliveryRewardInBalance, FromAssetHubKusamaToAssetHubPolkadotRoute,
-		OnMessagesDeliveredFromPolkadot,
-		PolkadotGlobalConsensusNetwork,
-		RefundBridgeHubPolkadotMessages, RequiredStakeForStakeAndSlash,
-		ToBridgeHubPolkadotHaulBlobExporter,
+		FromPingKusamaToPongPolkadotRoute, OnMessagesDeliveredFromPolkadot, PingKusamaParaId,
+		PolkadotGlobalConsensusNetwork, PongPolkadotLocation, PongPolkadotParaId,
+		RefundBridgeHubPolkadotMessages, RefundPingPongMessages, RequiredStakeForStakeAndSlash,
+		ToBridgeHubPolkadotHaulBlobExporter, ToBridgeHubPolkadotPingPongXcmBlobHauler,
 		ToBridgeHubPolkadotXcmBlobHauler, WithBridgeHubPolkadotMessageBridge,
-		WithBridgeHubPolkadotMessagesInstance,
+		WithBridgeHubPolkadotMessagesInstance, PING_KUSAMA_TO_PONG_POLKADOT_LANE,
 		XCM_LANE_FOR_ASSET_HUB_KUSAMA_TO_ASSET_HUB_POLKADOT,
 	},
 	xcm_config::{
@@ -89,7 +89,8 @@ fn construct_extrinsic(
 		frame_system::CheckWeight::<Runtime>::new(),
 		pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 		BridgeRejectObsoleteHeadersAndMessages,
-		(RefundBridgeHubPolkadotMessages::default()),
+		RefundBridgeHubPolkadotMessages::default(),
+		RefundPingPongMessages::default(),
 	);
 	let payload = SignedPayload::new(call.clone(), extra.clone()).unwrap();
 	let signature = payload.using_encoded(|e| sender.sign(e));
@@ -460,6 +461,28 @@ fn on_messages_delivered_from_polkadot_works_as_a_junction() {
 			assert!(!OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
 				&XCM_LANE_FOR_ASSET_HUB_KUSAMA_TO_ASSET_HUB_POLKADOT,
 			));
+
+			// when lane with bridged Pong is congested
+			ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(
+				PingKusamaParaId::get().into(),
+			);
+			LocalXcmQueueManager::<ToBridgeHubPolkadotPingPongXcmBlobHauler>::on_bridge_message_enqueued(
+				&FromPingKusamaToPongPolkadotRoute::get(),
+				1_000_000,
+			);
+			assert!(OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
+				&PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+			));
+			// AND when messages are delivered to bridged Pong
+			// AND we get a notification that the lane became uncongested
+			// => uncongested message is sent to the sibling Ping
+			OnMessagesDeliveredFromPolkadot::on_messages_delivered(
+				PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+				0,
+			);
+			assert!(!OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
+				&PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+			));
 		},
 	);
 }
@@ -507,6 +530,44 @@ fn to_bridge_hub_polkadot_haul_blob_exporter_works_as_a_junction() {
 			.unwrap();
 			assert!(OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
 				&XCM_LANE_FOR_ASSET_HUB_KUSAMA_TO_ASSET_HUB_POLKADOT,
+			));
+
+			// when lane with bridged Pong already has many messages
+			PolkadotXcm::force_xcm_version(
+				RuntimeOrigin::root(),
+				Box::new(PongPolkadotLocation::get()),
+				XCM_VERSION,
+			)
+			.unwrap();
+			OutboundLanes::<Runtime, WithBridgeHubPolkadotMessagesInstance>::insert(
+				PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+				OutboundLaneData {
+					oldest_unpruned_nonce: 0,
+					latest_received_nonce: 0,
+					latest_generated_nonce: 1_000_000,
+				},
+			);
+			ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(
+				PingKusamaParaId::get().into(),
+			);
+			assert!(!OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
+				&PING_KUSAMA_TO_PONG_POLKADOT_LANE,
+			));
+			// AND when next messages to bridged Pong is queued
+			// => congested message is sent to the sibling Ping
+			export_xcm::<ToBridgeHubPolkadotHaulBlobExporter>(
+				Polkadot,
+				0,
+				Junctions::from([
+					GlobalConsensus(Kusama),
+					Parachain(PingKusamaParaId::get().into()),
+				]),
+				Junctions::from([Parachain(PongPolkadotParaId::get().into())]),
+				vec![].into(),
+			)
+			.unwrap();
+			assert!(OutboundLanesCongestedSignals::<Runtime, WithBridgeHubPolkadotMessagesInstance>::contains_key(
+				&PING_KUSAMA_TO_PONG_POLKADOT_LANE,
 			));
 		},
 	);

@@ -21,7 +21,7 @@ use bridge_hub_polkadot_runtime::{
 	bridge_to_kusama_config::{
 		AssetHubKusamaParaId, BridgeGrandpaKusamaInstance, BridgeHubKusamaChainId,
 		BridgeHubKusamaLocation, BridgeParachainKusamaInstance, DeliveryRewardInBalance,
-		KusamaGlobalConsensusNetwork, RefundBridgeHubKusamaMessages,
+		KusamaGlobalConsensusNetwork, RefundBridgeHubKusamaMessages, RefundPingPongMessages,
 		RequiredStakeForStakeAndSlash, WithBridgeHubKusamaMessageBridge,
 		WithBridgeHubKusamaMessagesInstance, XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
 		AssetHubPolkadotParaId, FromAssetHubPolkadotToAssetHubKusamaRoute,
@@ -89,6 +89,7 @@ fn construct_extrinsic(
 		pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 		BridgeRejectObsoleteHeadersAndMessages,
 		RefundBridgeHubKusamaMessages::default(),
+		RefundPingPongMessages::default(),
 	);
 	let payload = SignedPayload::new(call.clone(), extra.clone()).unwrap();
 	let signature = payload.using_encoded(|e| sender.sign(e));

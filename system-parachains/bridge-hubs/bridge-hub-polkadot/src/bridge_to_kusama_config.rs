@@ -51,6 +51,9 @@ use xcm_builder::BridgeBlobDispatcher;
 /// Lane identifier, used to connect Polkadot Asset Hub and Kusama Asset Hub.
 pub const XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA: LaneId = LaneId([0, 0, 0, 1]);
 
+/// An unique lane id for connecting Kusama Ping and Polkadot Pong chains.
+pub const PONG_POLKADOT_TO_PING_KUSAMA_LANE: LaneId = LaneId([0, 0, 0, 2]);
+
 // Parameters that may be changed by the governance.
 parameter_types! {
 	/// Reward that is paid (by the Polkadot Asset Hub) to relayers for delivering a single
@@ -91,12 +94,26 @@ parameter_types! {
 	pub AssetHubPolkadotParaId: cumulus_primitives_core::ParaId = polkadot_runtime_constants::system_parachain::ASSET_HUB_ID.into();
 	/// Identifier of the bridged Kusama Asset Hub parachain.
 	pub AssetHubKusamaParaId: cumulus_primitives_core::ParaId = kusama_runtime_constants::system_parachain::ASSET_HUB_ID.into();
+
+	/// Identifier of the sibling Polkadot Pong parachain.
+	pub PongPolkadotParaId: cumulus_primitives_core::ParaId = 5_000.into();
+	/// Identifier of the bridged Kusama Ping parachain.
+	pub PingKusamaParaId: cumulus_primitives_core::ParaId = 5_000.into();
+
 	/// Location of the bridged Kusama Bridge Hub parachain.
 	pub BridgeHubKusamaLocation: Location = Location {
 		parents: 2,
 		interior: [
 			GlobalConsensus(KusamaGlobalConsensusNetwork::get()),
 			Parachain(<bp_bridge_hub_kusama::BridgeHubKusama as bp_runtime::Parachain>::PARACHAIN_ID)
+		].into()
+	};
+	/// Location of the bridged Kusama Ping parachain.
+	pub PingKusamaLocation: Location = Location {
+		parents: 2,
+		interior: [
+			GlobalConsensus(KusamaGlobalConsensusNetwork::get()),
+			Parachain(PingKusamaParaId::get().into())
 		].into()
 	};
 
@@ -107,18 +124,32 @@ parameter_types! {
 		XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
 	);
 
+	/// A route (XCM location and bridge lane) for the Kusama Ping <> Polkadot Pong.
+	pub FromPongPolkadotToPingKusamaRoute: SenderAndLane = SenderAndLane::new(
+		ParentThen(Parachain(PongPolkadotParaId::get().into()).into()).into(),
+		PONG_POLKADOT_TO_PING_KUSAMA_LANE,
+	);
+
 	/// Lane identifier, used to connect Polkadot Asset Hub and Kusama Asset Hub.
 	pub const AssetHubPolkadotToAssetHubKusamaMessagesLane: bp_messages::LaneId
 		= XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA;
+	/// Lane identifier, used to connect Kusama Ping and Polkadot Pong.
+	pub const PongPolkadotToPingKusamaMessagesLane: bp_messages::LaneId
+		= PONG_POLKADOT_TO_PING_KUSAMA_LANE;
+
 	/// All active lanes that the current bridge supports.
 	pub ActiveOutboundLanesToBridgeHubKusama: &'static [bp_messages::LaneId]
-		= &[XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA];
+		= &[XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA, PONG_POLKADOT_TO_PING_KUSAMA_LANE];
 
 	/// Lanes
 	pub ActiveLanes: sp_std::vec::Vec<(SenderAndLane, (NetworkId, InteriorLocation))> = sp_std::vec![
 			(
 				FromAssetHubPolkadotToAssetHubKusamaRoute::get(),
 				(KusamaGlobalConsensusNetwork::get(), Parachain(AssetHubKusamaParaId::get().into()).into())
+			),
+			(
+				FromPongPolkadotToPingKusamaRoute::get(),
+				(KusamaGlobalConsensusNetwork::get(), Parachain(PingKusamaParaId::get().into()).into())
 			)
 	];
 
@@ -128,6 +159,13 @@ parameter_types! {
 				XCM_LANE_FOR_ASSET_HUB_POLKADOT_TO_ASSET_HUB_KUSAMA,
 				Box::new(bridge_hub_helpers::XcmChannelStatusProviderAdapter::<
 					AssetHubPolkadotParaId,
+					Runtime,
+				>::new()),
+			),
+			(
+				PONG_POLKADOT_TO_PING_KUSAMA_LANE,
+				Box::new(bridge_hub_helpers::XcmChannelStatusProviderAdapter::<
+					PongPolkadotParaId,
 					Runtime,
 				>::new()),
 			)
@@ -284,7 +322,11 @@ pub type ToBridgeHubKusamaHaulBlobExporter = bridge_hub_helpers::OverBridgeXcmEx
 		bridge_hub_helpers::XcmBlobHaulerItemAdapter<
 			ToBridgeHubKusamaXcmBlobHauler,
 			FromAssetHubPolkadotToAssetHubKusamaRoute,
-		>
+		>,
+		bridge_hub_helpers::XcmBlobHaulerItemAdapter<
+			ToBridgeHubKusamaXcmBlobHauler,
+			FromPongPolkadotToPingKusamaRoute,
+		>,
 	),
 >;
 pub struct ToBridgeHubKusamaXcmBlobHauler;
@@ -296,12 +338,24 @@ impl XcmBlobHauler for ToBridgeHubKusamaXcmBlobHauler {
 	type UncongestedMessage = bp_asset_hub_polkadot::UncongestedMessage;
 }
 
-#[allow(unused_parens)] // `()` to make adding new lanes easier
+pub struct ToBridgeHubKusamaPingPongXcmBlobHauler;
+impl XcmBlobHauler for ToBridgeHubKusamaPingPongXcmBlobHauler {
+	type Runtime = Runtime;
+	type MessagesInstance = WithBridgeHubKusamaMessagesInstance;
+	type ToSourceChainSender = XcmRouter;
+	type CongestedMessage = ToPongPolkadotCongestedMessage;
+	type UncongestedMessage = ToPongPolkadotUncongestedMessage;
+}
+
 pub type AllXcmBlobHaulers = bridge_hub_helpers::XcmBlobHaulerAdapter<(
 	bridge_hub_helpers::XcmBlobHaulerItemAdapter<
 		ToBridgeHubKusamaXcmBlobHauler,
 		FromAssetHubPolkadotToAssetHubKusamaRoute,
-	>
+	>,
+	bridge_hub_helpers::XcmBlobHaulerItemAdapter<
+		ToBridgeHubKusamaPingPongXcmBlobHauler,
+		FromPongPolkadotToPingKusamaRoute,
+	>,
 )>;
 
 /// Add support for the export and dispatch of XCM programs.
@@ -380,6 +434,26 @@ pub type RefundBridgeHubKusamaMessages = bridge_hub_helpers::RefundSignedExtensi
 	ActiveRoutes,
 >;
 bp_runtime::generate_static_str_provider!(RefundBridgeHubKusamaMessages);
+
+/// Signed extension that refunds relayers that are delivering messages from the Polkadot parachain.
+pub type RefundPingPongMessages = bridge_hub_helpers::RefundSignedExtensionAdapter<
+	RefundBridgedParachainMessages<
+		Runtime,
+		RefundableParachain<
+			BridgeParachainKusamaInstance,
+			bp_bridge_hub_polkadot::BridgeHubPolkadot,
+		>,
+		RefundableMessagesLane<
+			WithBridgeHubKusamaMessagesInstance,
+			PongPolkadotToPingKusamaMessagesLane,
+		>,
+		ActualFeeRefund<Runtime>,
+		PriorityBoostPerMessage,
+		StrRefundPingPongMessages,
+	>,
+	ActiveRoutes,
+>;
+bp_runtime::generate_static_str_provider!(RefundPingPongMessages);
 
 #[cfg(test)]
 mod tests {
