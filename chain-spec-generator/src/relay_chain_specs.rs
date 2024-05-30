@@ -240,6 +240,9 @@ pub fn polkadot_testnet_genesis(
 		"configuration": {
 			"config": default_parachains_host_configuration(),
 		},
+		"sudo": {
+			"key": Some(_root_key),
+		},
 	})
 }
 
@@ -302,6 +305,9 @@ pub fn kusama_testnet_genesis(
 		},
 		"configuration": {
 			"config": default_parachains_host_configuration(),
+		},
+		"sudo": {
+			"key": Some(_root_key),
 		},
 	})
 }
