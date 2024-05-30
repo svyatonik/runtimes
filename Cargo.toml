@@ -32,6 +32,7 @@ bp-relayers = { version = "0.8.0", default-features = false }
 bp-runtime = { version = "0.8.0", default-features = false }
 bp-xcm-bridge-hub-router = { version = "0.7.0", default-features = false }
 bridge-hub-common = { version = "0.1.0", default-features = false }
+bridge-hub-helpers = { path = "system-parachains/bridge-hubs/bridge-hub-helpers", default-features = false }
 bridge-hub-kusama-emulated-chain = { path = "integration-tests/emulated/chains/parachains/bridges/bridge-hub-kusama" }
 bridge-hub-kusama-runtime = { path = "system-parachains/bridge-hubs/bridge-hub-kusama" }
 bridge-hub-polkadot-emulated-chain = { path = "integration-tests/emulated/chains/parachains/bridges/bridge-hub-polkadot" }
@@ -268,6 +269,7 @@ members = [
 	"system-parachains/asset-hubs/asset-hub-kusama/primitives",
 	"system-parachains/asset-hubs/asset-hub-polkadot",
 	"system-parachains/asset-hubs/asset-hub-polkadot/primitives",
+	"system-parachains/bridge-hubs/bridge-hub-helpers",
 	"system-parachains/bridge-hubs/bridge-hub-kusama",
 	"system-parachains/bridge-hubs/bridge-hub-kusama/primitives",
 	"system-parachains/bridge-hubs/bridge-hub-polkadot",
