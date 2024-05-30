@@ -16,6 +16,7 @@
 
 use crate::xcm_config;
 use sp_runtime::traits::Zero;
+use sp_std::vec::{self, Vec};
 use xcm::latest::prelude::*;
 
 pub use pallet::*;

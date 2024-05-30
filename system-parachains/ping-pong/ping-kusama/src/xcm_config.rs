@@ -140,6 +140,8 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
 	// XCM origins can be represented natively under the XCM pallet's `Xcm` origin.
 	XcmPassthrough<RuntimeOrigin>,
+	// Pong Polkadot as local root.
+	PongPolkadotAsRoot,
 );
 
 pub struct LocalPlurality;
@@ -284,6 +286,29 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
 
+/// Pong location converter to local root.
+pub struct PongPolkadotAsRoot;
+
+impl xcm_executor::traits::ConvertOrigin<RuntimeOrigin> for PongPolkadotAsRoot {
+	fn convert_origin(
+		origin: impl Into<Location>,
+		kind: OriginKind,
+	) -> Result<RuntimeOrigin, Location> {
+		let origin = origin.into();
+		log::trace!(
+			target: "xcm::origin_conversion",
+			"PongPolkadotAsRoot origin: {:?}, kind: {:?}",
+			origin, kind,
+		);
+		match (kind, origin.unpack()) {
+			(OriginKind::Superuser, (2, &[GlobalConsensus(bridged_network), Parachain(5_000)]))
+				if bridged_network == NetworkId::Polkadot =>
+				Ok(RuntimeOrigin::root()),
+			(_, _) => Err(origin),
+		}
+	}
+}
+
 /// All configuration related to bridging
 pub mod bridging {
 	use super::*;
@@ -293,10 +318,10 @@ pub mod bridging {
 	parameter_types! {
 		/// Base price of every Kusama -> Polkadot message. Can be adjusted via
 		/// governance `set_storage` call.
-		pub storage XcmBridgeHubRouterBaseFee: crate::Balance = 100; // TODO
+		pub storage XcmBridgeHubRouterBaseFee: crate::Balance = 1_000_000_000_000; // TODO
 		/// Price of every byte of the Kusama -> Polkadot message. Can be adjusted via
 		/// governance `set_storage` call.
-		pub storage XcmBridgeHubRouterByteFee: crate::Balance = 100; // TODO
+		pub storage XcmBridgeHubRouterByteFee: crate::Balance = 10_000; // TODO
 
 		pub const KsmLocation: Location = Location::parent();
 
@@ -395,4 +420,60 @@ fn treasury_pallet_account_not_none() {
 		RelayTreasuryPalletAccount::get(),
 		LocationToAccountId::convert_location(&RelayTreasuryLocation::get()).unwrap()
 	)
+}
+
+#[test]
+fn generate_sovereign_accounts() {
+	use polkadot_parachain_primitives::primitives::Sibling;
+	use sp_core::crypto::Ss58Codec;
+
+	parameter_types! {
+		pub UniversalLocationPongPolkadot: InteriorLocation = [GlobalConsensus(Polkadot), Parachain(5000)].into();
+		pub UniversalLocationPingKusama: InteriorLocation = [GlobalConsensus(Kusama), Parachain(5000)].into();
+	}
+
+	println!(
+		"GLOBAL_CONSENSUS_POLKADOT_SOVEREIGN_ACCOUNT=\"{}\"",
+		frame_support::sp_runtime::AccountId32::new(
+			xcm_builder::GlobalConsensusConvertsFor::<UniversalLocationPingKusama, [u8; 32]>::convert_location(
+				&Location { parents: 2, interior: [GlobalConsensus(Polkadot)].into() }
+			)
+			.unwrap()
+		)
+		.to_ss58check_with_version(2_u16.into())
+	);
+
+	println!(
+		"PING_KUSAMA_SOVEREIGN_ACCOUNT_AT_BRIDGE_HUB_KUSAMA=\"{}\"",
+		frame_support::sp_runtime::AccountId32::new(
+			SiblingParachainConvertsVia::<Sibling, [u8; 32]>::convert_location(&Location {
+				parents: 1,
+				interior: [Parachain(5000)].into()
+			})
+			.unwrap()
+		)
+		.to_ss58check_with_version(2_u16.into())
+	);
+
+	println!(
+		"GLOBAL_CONSENSUS_KUSAMA_SOVEREIGN_ACCOUNT=\"{}\"",
+		frame_support::sp_runtime::AccountId32::new(
+			xcm_builder::GlobalConsensusConvertsFor::<UniversalLocationPongPolkadot, [u8; 32]>::convert_location(
+				&Location { parents: 2, interior: [GlobalConsensus(Kusama)].into() }
+			)
+			.unwrap()
+		)
+		.to_ss58check_with_version(0_u16.into())
+	);
+	println!(
+		"PONG_POLKADOT_SOVEREIGN_ACCOUNT_AT_BRIDGE_HUB_POLKADOT=\"{}\"",
+		frame_support::sp_runtime::AccountId32::new(
+			SiblingParachainConvertsVia::<Sibling, [u8; 32]>::convert_location(&Location {
+				parents: 1,
+				interior: [Parachain(5000)].into()
+			})
+			.unwrap()
+		)
+		.to_ss58check_with_version(0_u16.into())
+	);
 }

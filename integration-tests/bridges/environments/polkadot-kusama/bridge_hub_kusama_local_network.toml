@@ -13,6 +13,7 @@ validator = true
 rpc_port = 9935
 ws_port = 9945
 balance = 2000000000000
+args = ["-lxcm=trace,runtime=trace,txpool=trace"]
 
 [[relaychain.nodes]]
 name = "bob"
@@ -77,7 +78,7 @@ args = [
 [[parachains]]
 id = 5000
 #chain = "ping-kusama-local"
-chain_spec = "{{ENV_PATH}}/../../ping-kusama-local-chain-spec.json"
+chain_spec_path = "{{ENV_PATH}}/../../ping-kusama-local-chain-spec.json"
 cumulus_based = true
 
 [[parachains.collators]]
@@ -85,9 +86,9 @@ name = "ping-kusama-collator-1"
 rpc_port = 9051
 ws_port = 9050
 command = "{{POLKADOT_PARACHAIN_BINARY}}"
-args = ["-lparachain=debug,xcm=trace,runtime::bridge-transfer=trace"]
+args = ["-lparachain=debug,xcm=trace,runtime::bridge=trace"]
 
 [[parachains.collators]]
 name = "ping-kusama-collator-2"
 command = "{{POLKADOT_PARACHAIN_BINARY}}"
-args = ["-lparachain=debug,xcm=trace,runtime::bridge-transfer=trace"]
+args = ["-lparachain=debug,xcm=trace,runtime::bridge=trace"]

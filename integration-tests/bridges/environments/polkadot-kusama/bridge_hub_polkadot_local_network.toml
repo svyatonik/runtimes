@@ -75,7 +75,7 @@ args = [
 [[parachains]]
 id = 5000
 #chain = "pong-polkadot-local"
-chain_spec = "{{ENV_PATH}}/../../pong-polkadot-local-chain-spec.json"
+chain_spec_path = "{{ENV_PATH}}/../../pong-polkadot-local-chain-spec.json"
 cumulus_based = true
 
 [[parachains.collators]]
@@ -83,9 +83,9 @@ name = "pong-polkadot-collator-1"
 rpc_port = 9912
 ws_port = 9913
 command = "{{POLKADOT_PARACHAIN_BINARY}}"
-args = ["-lparachain=debug,xcm=trace,runtime::bridge-transfer=trace"]
+args = ["-lparachain=debug,xcm=trace,runtime::bridge=trace"]
 
 [[parachains.collators]]
 name = "pong-polkadot-collator-2"
 command = "{{POLKADOT_PARACHAIN_BINARY}}"
-args = ["-lparachain=debug,xcm=trace,runtime::bridge-transfer=trace"]
+args = ["-lparachain=debug,xcm=trace,runtime::bridge=trace"]

@@ -140,6 +140,8 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
 	// XCM origins can be represented natively under the XCM pallet's `Xcm` origin.
 	XcmPassthrough<RuntimeOrigin>,
+	// Ping Kusama as local root.
+	PingKusamaAsRoot,
 );
 
 pub struct LocalPlurality;
@@ -284,6 +286,29 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
 
+/// Ping location converter to local root.
+pub struct PingKusamaAsRoot;
+
+impl xcm_executor::traits::ConvertOrigin<RuntimeOrigin> for PingKusamaAsRoot {
+	fn convert_origin(
+		origin: impl Into<Location>,
+		kind: OriginKind,
+	) -> Result<RuntimeOrigin, Location> {
+		let origin = origin.into();
+		log::trace!(
+			target: "xcm::origin_conversion",
+			"PingKusamaAsRoot origin: {:?}, kind: {:?}",
+			origin, kind,
+		);
+		match (kind, origin.unpack()) {
+			(OriginKind::Superuser, (2, &[GlobalConsensus(bridged_network), Parachain(5_000)]))
+				if bridged_network == NetworkId::Kusama =>
+				Ok(RuntimeOrigin::root()),
+			(_, _) => Err(origin),
+		}
+	}
+}
+
 /// All configuration related to bridging
 pub mod bridging {
 	use super::*;
@@ -293,10 +318,11 @@ pub mod bridging {
 	parameter_types! {
 		/// Base price of every Polkadot -> Kusama message. Can be adjusted via
 		/// governance `set_storage` call.
-		pub storage XcmBridgeHubRouterBaseFee: crate::Balance = 100; // TODO
+		pub storage XcmBridgeHubRouterBaseFee: crate::Balance = 10_000_000_000; // TODO
+
 		/// Price of every byte of the Kusama -> Polkadot message. Can be adjusted via
 		/// governance `set_storage` call.
-		pub storage XcmBridgeHubRouterByteFee: crate::Balance = 100; // TODO
+		pub storage XcmBridgeHubRouterByteFee: crate::Balance = 10_000; // TODO
 
 		pub const DotLocation: Location = Location::parent();
 

@@ -915,7 +915,7 @@ pub fn pong_polkadot_local_testnet_config() -> Result<Box<dyn ChainSpec>, String
 			pong_polkadot_runtime::WASM_BINARY.expect("PingPolkadot wasm not available!"),
 			Extensions { relay_chain: "polkadot-local".into(), para_id: 5000 },
 		)
-		.with_name("Ping Polkadot Local")
+		.with_name("Pong Polkadot Local")
 		.with_id("pong-polkadot-local")
 		.with_chain_type(ChainType::Local)
 		.with_genesis_config_patch(pong_polkadot_local_genesis(5000.into()))

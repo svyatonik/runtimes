@@ -28,3 +28,7 @@ command. Copy the binary to `~/local_bridge_testing/bin/chain-spec-generator`.
 have correct values) in the `./run-test.sh`.
 
 After that, you can run `./run-tests.sh <test_name>` command.
+
+git checkout ping-pong
+git checkout polkadot-v1.7.0
+git cherry-pick e4b6b8cd7973633f86d1b92a56abf2a946b7be84

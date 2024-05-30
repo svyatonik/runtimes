@@ -23,6 +23,8 @@ echo
 
 echo "Everything is spawned. You may start watching ping-pong:"
 xdg-open https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:9050#/explorer&
+xdg-open https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:8945#/explorer&
+xdg-open https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:8943#/explorer&
 xdg-open https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:9913#/explorer&
 
 sleep 60000

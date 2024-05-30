@@ -15,6 +15,7 @@
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::xcm_config;
+use sp_std::vec::{self, Vec};
 use xcm::latest::prelude::*;
 
 pub use pallet::*;
