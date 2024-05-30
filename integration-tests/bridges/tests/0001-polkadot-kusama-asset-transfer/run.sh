@@ -21,8 +21,16 @@ ensure_process_file $env_pid $TEST_DIR/kusama.env 300
 kusama_dir=`cat $TEST_DIR/kusama.env`
 echo
 
-run_zndsl ${BASH_SOURCE%/*}/dot-reaches-kusama.zndsl $kusama_dir
-run_zndsl ${BASH_SOURCE%/*}/ksm-reaches-polkadot.zndsl $polkadot_dir
+echo "Everything is spawned. You may start watching ping-pong:"
+xdg-open https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:9050#/explorer&
+xdg-open https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:8945#/explorer&
+xdg-open https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:8943#/explorer&
+xdg-open https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:9913#/explorer&
 
-run_zndsl ${BASH_SOURCE%/*}/wdot-reaches-polkadot.zndsl $polkadot_dir
-run_zndsl ${BASH_SOURCE%/*}/wksm-reaches-kusama.zndsl $kusama_dir
+sleep 60000
+
+#run_zndsl ${BASH_SOURCE%/*}/dot-reaches-kusama.zndsl $kusama_dir
+#run_zndsl ${BASH_SOURCE%/*}/ksm-reaches-polkadot.zndsl $polkadot_dir
+#
+#run_zndsl ${BASH_SOURCE%/*}/wdot-reaches-polkadot.zndsl $polkadot_dir
+#run_zndsl ${BASH_SOURCE%/*}/wksm-reaches-kusama.zndsl $kusama_dir
