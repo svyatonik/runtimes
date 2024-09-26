@@ -44,6 +44,7 @@ pub mod fellowship;
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use fellowship::{pallet_fellowship_origins, Fellows};
+use frame_support::genesis_builder_helper::{build_config, create_default_config};
 use impls::{AllianceProposalProvider, EqualOrGreatestRootCmp, ToParentTreasury};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};

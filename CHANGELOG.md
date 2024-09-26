@@ -129,6 +129,11 @@ TODO for bridging: port https://github.com/paritytech/polkadot-sdk/pull/2023/fil
 ## [1.0.3] XX.XX.XXXX
 
 ### Changed
+## [Unreleased]
+
+### Added
+
+- Introduce chain spec generator ([polkadot-fellows/runtimes#78](https://github.com/polkadot-fellows/runtimes/pull/78))
 
 ## [1.0.0] 22.10.2023
 
